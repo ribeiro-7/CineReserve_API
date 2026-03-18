@@ -1,0 +1,37 @@
+# 🔐 Ambiente virtual
+venv/
+.env
+
+# 🐍 Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 📦 Distribuição / build
+build/
+dist/
+*.egg-info/
+
+# 🗄️ Banco de dados (SQLite)
+db.sqlite3
+
+# 📂 Arquivos do Django
+*.log
+staticfiles/
+media/
+migrations/
+
+# 🔑 Variáveis sensíveis
+.env
+
+# 🧪 Testes / cobertura
+.coverage
+htmlcov/
+
+# 🧰 VS Code
+.vscode/
+
+# 💻 Sistema operacional
+.DS_Store
+Thumbs.db
