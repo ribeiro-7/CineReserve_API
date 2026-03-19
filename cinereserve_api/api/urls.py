@@ -1,9 +1,8 @@
 from django.urls import path
 from . import views
+from rest_framework.routers import DefaultRouter
 
+router = DefaultRouter()
+router.register(r'movies', views.MovieViewSet)
 
-urlpatterns = [
-    path('movies/', views.movie_list, name="All Movies List"),
-    path('session/', views.session_list, name="Session List"),
-
-]
+urlpatterns = router.urls
