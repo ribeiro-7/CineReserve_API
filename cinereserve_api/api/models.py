@@ -18,7 +18,7 @@ class Movie(models.Model):
         ("Comédia", "Comédia"),
         ("Drama", "Drama"),
         ("Ficção Científica", "Ficção Científica"),
-        ("Terror ", "Terror"),
+        ("Terror", "Terror"),
         ("Suspense ", "Suspense"),
         ("Romance", "Romance"),
         ("Fantasia", "Fantasia"),
