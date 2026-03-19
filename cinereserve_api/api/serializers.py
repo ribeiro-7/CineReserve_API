@@ -12,13 +12,28 @@ class MovieListSerializer(serializers.ModelSerializer):
 class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
-        fields = ['date', 'showtime', 'theater']
+        fields = ['date', 'showtime', 'theater', 'movie']
+        extra_kwargs = {
+            'movie': {'write_only': True}
+        }
 
-class MovieDetailSerializer(serializers.ModelSerializer):
+class MovieDetailWithSessionSerializer(serializers.ModelSerializer):
     sessions = SessionSerializer(many=True, read_only=True)
     class Meta:
         model = Movie
         fields = ['title', 'description', 'duration', 'age_rating', 'genre', 'release_date', 'sessions']
+
+class MovieDetailWithoutSession(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = ['title', 'description', 'duration', 'age_rating', 'genre', 'release_date']
+
+
+class SessionDetailSerializer(serializers.ModelSerializer):
+    movie = MovieDetailWithoutSession(read_only=True)
+    class Meta:
+        model = Session
+        fields = ['date', 'showtime', 'theater', 'movie']
 
 class RegisterUserSerializer(serializers.ModelSerializer):
 
