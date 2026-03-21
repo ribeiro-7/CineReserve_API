@@ -56,5 +56,7 @@ class SeatSession(models.Model):
     seat = models.ForeignKey(Seat, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICE, default='Available')
 
+    reserved_until = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         unique_together = ['session', 'seat']
