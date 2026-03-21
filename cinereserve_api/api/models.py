@@ -38,3 +38,23 @@ class Session(models.Model):
     showtime = models.TimeField()
     theater = models.CharField(max_length=50)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="sessions")
+
+
+class Seat(models.Model):
+    row = models.CharField(max_length=5)
+    number = models.IntegerField()
+
+class SeatSession(models.Model):
+
+    STATUS_CHOICE = [
+        ('Available', 'Available'),
+        ('Reserved', 'Reserved'),
+        ('Sold', 'Sold')
+    ]
+
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name='seats')
+    seat = models.ForeignKey(Seat, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICE, default='Available')
+
+    class Meta:
+        unique_together = ['session', 'seat']
