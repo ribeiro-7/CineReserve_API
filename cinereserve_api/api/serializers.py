@@ -4,36 +4,53 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .validators import password_validator
 
-class MovieListSerializer(serializers.ModelSerializer):
+class BaseMovieSerializer(serializers.ModelSerializer):
+    duration = serializers.SerializerMethodField()
+    age_rating = serializers.SerializerMethodField()
+
     class Meta:
         model = Movie
-        fields = ['title', 'description', 'duration', 'age_rating', 'genre', 'release_date']
+        fields = ['id', 'title', 'description', 'duration', 'age_rating', 'genre', 'release_date']
 
+    def get_duration(self, obj):
+        return f"{obj.duration} min"
+    
+    def get_age_rating(self, obj):
+        return {
+            "code": obj.age_rating,
+            "label": obj.get_age_rating_display()
+        }
+
+
+class MovieListSerializer(BaseMovieSerializer):
+        pass
+
+    
 class SessionSerializer(serializers.ModelSerializer):
+    showtime = serializers.TimeField(format="%H:%M")
+    date = serializers.DateField(format="%d/%m/%Y")
+
     class Meta:
         model = Session
-        fields = ['date', 'showtime', 'theater', 'movie']
+        fields = ['id', 'date', 'showtime', 'theater', 'movie']
         extra_kwargs = {
             'movie': {'write_only': True}
         }
 
-class MovieDetailWithSessionSerializer(serializers.ModelSerializer):
+class MovieDetailWithSessionSerializer(BaseMovieSerializer):
     sessions = SessionSerializer(many=True, read_only=True)
-    class Meta:
-        model = Movie
-        fields = ['title', 'description', 'duration', 'age_rating', 'genre', 'release_date', 'sessions']
 
-class MovieDetailWithoutSession(serializers.ModelSerializer):
-    class Meta:
-        model = Movie
-        fields = ['title', 'description', 'duration', 'age_rating', 'genre', 'release_date']
+    class Meta(BaseMovieSerializer.Meta):
+        fields = BaseMovieSerializer.Meta.fields + ['sessions']
+
+class MovieDetailWithoutSession(BaseMovieSerializer):
+    pass
 
 
-class SessionDetailSerializer(serializers.ModelSerializer):
+class SessionDetailSerializer(SessionSerializer):
     movie = MovieDetailWithoutSession(read_only=True)
-    class Meta:
-        model = Session
-        fields = ['date', 'showtime', 'theater', 'movie']
+    class Meta(SessionSerializer.Meta):
+        fields = SessionSerializer.Meta.fields + ['movie']
 
 class RegisterUserSerializer(serializers.ModelSerializer):
 
