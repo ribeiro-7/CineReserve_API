@@ -69,6 +69,7 @@ class SessionViewSet(ModelViewSet):
             seat_session.reserved_until = timezone.now() + timedelta(minutes=10)
             seat_session.save()
             return Response({'message': 'Seat reserved for 10 minutes'}, status=status.HTTP_200_OK)
+
         
         return Response({'error': f'This seat is {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
 
