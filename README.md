@@ -46,6 +46,7 @@ docker-compose up --build
 Em outro terminal:
 
 ```bash
+docker-compose exec web python cinereserve_api/manage.py makemigrations
 docker-compose exec web python cinereserve_api/manage.py migrate
 ```
 
