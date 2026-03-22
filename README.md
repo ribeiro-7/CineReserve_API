@@ -1,11 +1,15 @@
 # 🎬 CineReserve API
 
+A documentação da API toda foi feita no POSTMAN, lá eu explico cada endpoint com exemplos na prática.
+👇👇👇
+Link para documentação: https://documenter.getpostman.com/view/40491697/2sBXijJXRb
+
 ## 🚀 Como rodar o projeto com Docker
 
 ### 1. Clonar o repositório
 
 ```bash
-git clone <seu-repo>
+git clone https://github.com/ribeiro-7/CineReserve_API
 cd CineReserve_API
 ```
 
@@ -16,12 +20,13 @@ cd CineReserve_API
 Crie um arquivo `.env` baseado no `.env.example`:
 
 ```env
-DB_NAME=cinereserve_db
-DB_USER=postgres
-DB_PASSWORD=postgres
+DB_NAME=nome_do_seu_bd
+DB_USER=user_do_db
+DB_PASSWORD=senha_do_bd
 DB_HOST=db
 DB_PORT=5432
-SECRET_KEY=sua_chave_secreta
+
+SECRET_KEY=CHANGE-ME
 ```
 
 ---
@@ -70,5 +75,6 @@ docker-compose exec web python cinereserve_api/manage.py runscript populate
 ## 🛑 Parar o projeto
 
 ```bash
+Ctrl + C
 docker-compose down
 ```
