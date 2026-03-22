@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
@@ -46,6 +46,7 @@ class SessionViewSet(ModelViewSet):
         seats = session.seats.all()
         serializer = SeatSessionSerializer(seats, many=True)
         return Response(serializer.data)
+    
     
     @action(detail=True, methods=['post'])
     def reserve(self, request, pk=None):
@@ -104,6 +105,8 @@ class SessionViewSet(ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'partial_update', 'update', 'destroy']:
             return [IsAdminUser()]
+        elif self.action in ['reserve', 'buy']:
+            return [IsAuthenticated()]
         return [AllowAny()]
 
 
