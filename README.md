@@ -65,6 +65,8 @@ docker-compose exec web python cinereserve_api/manage.py createsuperuser
 
 ### 6. Popular o banco (opcional)
 
+Fiz um Script chamado "Populate" para criar objetos no banco de dados mais facilmente com filmes, sessões e as cadeiras das sessões.
+
 ```bash
 docker-compose exec web python cinereserve_api/manage.py runscript populate
 ```
