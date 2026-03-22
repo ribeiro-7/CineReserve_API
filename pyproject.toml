@@ -1,0 +1,64 @@
+[project]
+name = "cinereserve-api"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "ribeirin-7",email = "arthurr366@gmail.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "asgiref (==3.11.1)",
+    "django (==6.0.3)",
+    "anyio (==4.12.1)",
+    "build (==1.4.0)",
+    "cachecontrol (==0.14.4)",
+    "certifi (==2026.2.25)",
+    "charset-normalizer (==3.4.6)",
+    "colorama (==0.4.6)",
+    "distlib (==0.4.0)",
+    "django-extensions (==4.1)",
+    "djangorestframework (==3.17.0)",
+    "djangorestframework-simplejwt (==5.5.1)",
+    "dulwich (==1.1.0)",
+    "faker (==40.11.0)",
+    "fastjsonschema (==2.21.2)",
+    "filelock (==3.25.2)",
+    "findpython (==0.7.1)",
+    "h11 (==0.16.0)",
+    "httpcore (==1.0.9)",
+    "httpx (==0.28.1)",
+    "idna (==3.11)",
+    "installer (==0.7.0)",
+    "jaraco-classes (==3.4.0)",
+    "jaraco-context (==6.1.2)",
+    "jaraco-functools (==4.4.0)",
+    "keyring (==25.7.0)",
+    "more-itertools (==10.8.0)",
+    "msgpack (==1.1.2)",
+    "packaging (==26.0)",
+    "pbs-installer (==2026.3.20)",
+    "pkginfo (==1.12.1.2)",
+    "platformdirs (==4.9.4)",
+    "psycopg2-binary (==2.9.11)",
+    "pyjwt (==2.12.1)",
+    "pyproject-hooks (==1.2.0)",
+    "python-decouple (==3.8)",
+    "python-discovery (==1.2.0)",
+    "pywin32-ctypes (==0.2.3)",
+    "rapidfuzz (==3.14.3)",
+    "requests (==2.32.5)",
+    "requests-toolbelt (==1.0.0)",
+    "shellingham (==1.5.4)",
+    "sqlparse (==0.5.5)",
+    "tomlkit (==0.14.0)",
+    "trove-classifiers (==2026.1.14.14)",
+    "tzdata (==2025.3)",
+    "urllib3 (==2.6.3)",
+    "virtualenv (==21.2.0)",
+    "zstandard (==0.25.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
