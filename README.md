@@ -20,6 +20,9 @@ cd CineReserve_API
 ### 2. Criar arquivo `.env`
 
 Crie um arquivo `.env` baseado no `.env.example`:
+O arquivo tem que ser criado na raiz do projeto.
+
+Adicione as informações do seu banco de dados 👇
 
 ```env
 DB_NAME=nome_do_seu_bd
