@@ -3,17 +3,22 @@ from api.models import Movie, Session
 
 
 class BaseMovieSerializer(serializers.ModelSerializer):
-    duration = serializers.SerializerMethodField()
-    age_rating = serializers.SerializerMethodField()
+    duration_display = serializers.SerializerMethodField(read_only=True)
+    age_rating_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Movie
-        fields = ['id', 'title', 'description', 'duration', 'age_rating', 'genre', 'release_date']
+        fields = ['id', 'title', 'description', 'duration', 'duration_display', 
+                  'age_rating', 'age_rating_display', 'genre', 'release_date']
+        extra_kwargs = {
+            'duration': {'write_only': True},
+            'age_rating': {'write_only': True}
+        }
 
-    def get_duration(self, obj):
+    def get_duration_display(self, obj):
         return f"{obj.duration} min"
     
-    def get_age_rating(self, obj):
+    def get_age_rating_display(self, obj):
         return {
             "code": obj.age_rating,
             "label": obj.get_age_rating_display()
