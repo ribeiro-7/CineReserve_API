@@ -2,7 +2,7 @@
 
 A documentação da API toda foi feita no POSTMAN, lá eu explico cada endpoint com exemplos na prática.
 👇👇👇
-Link para documentação: https://documenter.getpostman.com/view/40491697/2sBXijJXRb
+## Link para documentação: https://documenter.getpostman.com/view/40491697/2sBXijJXRb
 
 ## 🚀 Como rodar o projeto com Docker
 
