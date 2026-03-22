@@ -1,5 +1,7 @@
 # 🎬 CineReserve API
 
+A API CineReserve é um backend RESTful escalável e de alto desempenho, projetado para gerenciar as complexidades das operações modernas de cinema. Construído com foco na integridade dos dados e no controle de concorrência, o sistema oferece um portal completo para que os cinéfilos descubram filmes, visualizem a disponibilidade de assentos em tempo real, reservem e comprem assentos disponíveis.
+
 A documentação da API toda foi feita no POSTMAN, lá eu explico cada endpoint com exemplos na prática.
 👇👇👇
 ## Link para documentação: https://documenter.getpostman.com/view/40491697/2sBXijJXRb
