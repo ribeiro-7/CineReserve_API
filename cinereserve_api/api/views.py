@@ -95,7 +95,7 @@ class SessionViewSet(ModelViewSet):
             seat_session.save()
             return Response({'message': f'You bought a ticket for: "{seat_session.session.movie.title}", your seat is: "{seat_session.seat.row}{seat_session.seat.number}"'})
         
-        return Response({'error': f'This seat is already {seat_session.status}'})
+        return Response({'error': f'This seat is already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def get_serializer_class(self):
