@@ -73,7 +73,8 @@ docker-compose exec web python cinereserve_api/manage.py runscript populate
 
 ## 🌐 Acessos
 
-* API: http://localhost:8000
+Base URL para os endpoints 👇
+* API: http://localhost:8000/api/
 * Admin: http://localhost:8000/admin
 
 ---
