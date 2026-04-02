@@ -8,13 +8,13 @@ from rest_framework_simplejwt.views import (
 )
 
 router = DefaultRouter()
-router.register(r'api/movies', views.MovieViewSet)
-router.register(r'api/sessions', views.SessionViewSet)
+router.register(r'movies', views.MovieViewSet)
+router.register(r'sessions', views.SessionViewSet)
 
 urlpatterns = [
-    path('api/register/', views.RegisterUserView.as_view(), name='Register User'),
-    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('register/', views.RegisterUserView.as_view(), name='Register User'),
+    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('', include(router.urls)),
 ]
