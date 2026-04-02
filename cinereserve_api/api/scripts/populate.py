@@ -1,6 +1,6 @@
 import random
 from faker import Faker
-from datetime import time
+from datetime import datetime, timedelta, time
 from api.models import Movie, Session, Seat
 
 fake = Faker('pt_BR')
@@ -19,6 +19,13 @@ GENRES = [
     "Documentário",
 ]
 
+# 🔥 gera datas do presente até X dias no futuro
+def generate_future_date(max_days_ahead=30):
+    today = datetime.now().date()
+    days_ahead = random.randint(0, max_days_ahead)
+    return today + timedelta(days=days_ahead)
+
+
 def run():
     print("Limpando banco...")
     Session.objects.all().delete()
@@ -32,7 +39,6 @@ def run():
                 Seat.objects.create(row=row, number=num)
 
         print("Assentos criados!")
-
     else:
         print("Assentos já existem.")
 
@@ -53,11 +59,15 @@ def run():
 
     print("Criando sessões...")
 
+    SHOWTIMES = [14, 16, 18, 20, 22]
+
     for movie in movies:
-        for _ in range(3): 
+        for _ in range(3):
+            session_date = generate_future_date()
+
             Session.objects.create(
-                date=fake.date_this_month(),
-                showtime=time(random.choice([14, 16, 18, 20, 22]), 0),
+                date=session_date,
+                showtime=time(random.choice(SHOWTIMES), 0),
                 theater=f"Sala {random.randint(1,7)}",
                 movie=movie
             )
