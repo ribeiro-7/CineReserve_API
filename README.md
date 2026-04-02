@@ -32,6 +32,8 @@ DB_HOST=db
 DB_PORT=5432
 
 SECRET_KEY=CHANGE-ME
+
+CELERY_BROKER_URL=url_do_broker
 ```
 
 ---
