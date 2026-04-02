@@ -11,8 +11,11 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - redis
     env_file:
       - .env
+    environment:
+      - TZ=America/Sao_Paulo
 
   db:
     image: postgres:15
@@ -21,5 +24,29 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: "America/Sao_Paulo"
     ports:
       - "5432:5432"
+    
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: celery_worker
+    command: poetry run python -m celery -A cinereserve_api worker -l info -P solo
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/cinereserve_api
+      - TZ=America/Sao_Paulo
