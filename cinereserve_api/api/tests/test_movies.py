@@ -20,7 +20,6 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         self.create_movies(movies_number)
         api_url = reverse('movies-list')
         response = self.client.get(api_url)
-        print(response.data)
         self.assertEqual(
             response.status_code,
             200
@@ -30,7 +29,6 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
             movies_number
         )
         
-
     def test_movie_list_loads_correct_number_of_movies_defined_on_pagination(self):
         movies_number = 5
         self.create_movies(movies_number)
