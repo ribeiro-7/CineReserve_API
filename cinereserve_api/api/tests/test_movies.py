@@ -1,9 +1,13 @@
 from rest_framework import test
 from django.urls import reverse
 from .mixins import jwt_mixins, movie_mixins
+from django.core.cache import cache
 
-class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):     
-    def test_movie_list_returns_status_code_200(self):
+class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):   
+    def setUp(self):
+        cache.clear()  
+    
+    def test_movie_list_returns_status_code_200_ok(self):
         api_url = reverse('movies-list')
         response = self.client.get(api_url)
         self.assertEqual(
@@ -11,7 +15,23 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
             200
         )
 
-    def test_movie_list_loads_correct_number_of_movies(self):
+    def test_movie_list_returns_all_movies_and_code_200_ok(self):
+        movies_number = 10
+        self.create_movies(movies_number)
+        api_url = reverse('movies-list')
+        response = self.client.get(api_url)
+        print(response.data)
+        self.assertEqual(
+            response.status_code,
+            200
+        )
+        self.assertEqual(
+            response.data.get('count'),
+            movies_number
+        )
+        
+
+    def test_movie_list_loads_correct_number_of_movies_defined_on_pagination(self):
         movies_number = 5
         self.create_movies(movies_number)
         response = self.client.get(reverse('movies-list'))
