@@ -19,7 +19,7 @@ class Movie(models.Model):
         ("Drama", "Drama"),
         ("Ficção Científica", "Ficção Científica"),
         ("Terror", "Terror"),
-        ("Suspense ", "Suspense"),
+        ("Suspense", "Suspense"),
         ("Romance", "Romance"),
         ("Fantasia", "Fantasia"),
         ("Musical", "Musical"),
