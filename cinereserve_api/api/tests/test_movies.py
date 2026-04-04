@@ -107,7 +107,6 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
         api_url = reverse('movies-list')
         data = {
-            'id': 1,
             "title": "O Mundo Depois de Nós",
             "description": "Amanda e Clay alugam uma casa de luxo para passar alguns dias tranquilos longe da cidade grande com seus filhos. Mas uma catástrofe misteriosa vira o país de ponta cabeça. G.H. e Ruth batem à sua porta afirmando que são os donos originais da mansão e pedem abrigo no lugar. Desconfiados e em meio ao caos do mundo, os estranhos são obrigados a morar juntos, mas não conseguem confiar uns nos outros.",
             "duration": 140,
@@ -121,10 +120,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
             201
         )
 
-        self.assertEqual(
-            response.data.get('id'),
-            data.get('id')
-        )
+        self.assertIsNotNone(response.data.get('id'))
 
         self.assertEqual(
             response.data.get('title'),
@@ -225,6 +221,67 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         self.assertEqual(
             response.data.get('release_date'),
             update_data.get('release_date')
+        )
+
+    def test_movie_dont_partial_update_a_movie_without_permission_and_returns_error_403_forbidden(self):
+        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        movie = self.create_movie()
+        data = {
+            "duration": 130,
+            "age_rating": "14",
+            "genre": "Suspense"
+        }
+        api_url = reverse('movies-detail', args=[movie.id])
+        response = self.client.patch(api_url, data=data, HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        self.assertEqual(
+            response.status_code,
+            403
+        )
+
+    def test_movie_partial_update_a_movie_being_an_admin_and_returns_correct_data_and_code_200_ok(self):
+        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        movie = self.create_movie()
+        update_data = {
+            "duration": 130,
+            "age_rating": "14",
+            "genre": "Suspense"
+        }
+        api_url = reverse('movies-detail', args=[movie.id])
+        response = self.client.patch(api_url, data=update_data, HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        self.assertEqual(
+            response.status_code,
+            200
+        )
+        self.assertIsNotNone(response.data.get('id'))
+
+        self.assertEqual(
+            response.data.get('title'),
+            movie.title
+        )
+
+        self.assertEqual(
+            response.data.get('description'),
+            movie.description
+        )
+
+        self.assertEqual(
+            response.data.get('duration_display').split()[0],
+            str(update_data.get('duration'))
+        )
+
+        self.assertEqual(
+            response.data.get('age_rating_display').get('code'),
+            update_data.get('age_rating')
+        )
+
+        self.assertEqual(
+            response.data.get('genre'),
+            update_data.get('genre')
+        )
+
+        self.assertEqual(
+            response.data.get('release_date'),
+            movie.release_date
         )
 
     def test_movie_dont_delete_a_movie_without_permission_and_returns_error_403_forbidden(self):
