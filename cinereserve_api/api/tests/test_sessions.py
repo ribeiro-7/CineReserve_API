@@ -69,7 +69,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_dont_create_new_session_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         api_url = reverse('sessions-list')
         movie = self.create_movie()
         data = {
@@ -85,7 +85,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_create_new_session_being_an_admin_and_returns_correct_data_and_code_201_created(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         api_url = reverse('sessions-list')
         movie = self.create_movie()
         session_data = {
@@ -115,7 +115,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_dont_update_a_session_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         session = self.create_session()
         api_url = reverse('sessions-detail', args=[session.id])
         update_data = {
@@ -131,7 +131,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_update_a_session_being_an_admin_and_returns_correct_data_and_code_200_ok(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         session = self.create_session()
         api_url = reverse('sessions-detail', args=[session.id])
         update_data = {
@@ -162,7 +162,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
     
     def test_session_dont_partial_update_a_session_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         session = self.create_session()
         api_url = reverse('sessions-detail', args=[session.id])
         update_data = {
@@ -175,7 +175,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_partial_update_a_session_being_an_admin_and_returns_correct_data_and_code_200_ok(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         session = self.create_session()
         api_url = reverse('sessions-detail', args=[session.id])
         update_data = {
@@ -189,7 +189,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         self.assertIsNotNone(response.data.get('id'))
         self.assertEqual(
             response.data.get('date'),
-            self.format_date(session.date)
+            self.format_date(str(session.date))
         )
         self.assertEqual(
             response.data.get('showtime'),
@@ -202,7 +202,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_dont_delete_a_session_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         session = self.create_session()
         api_url = reverse('sessions-detail', args=[session.id])
         response = self.client.delete(api_url, HTTP_AUTHORIZATION=f'Bearer {access_token}')
@@ -212,7 +212,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
 
     def test_session_delete_a_session_being_an_admin_and_returns_code_204_no_content(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         session = self.create_session()
         api_url = reverse('sessions-detail', args=[session.id])
         response = self.client.delete(api_url, HTTP_AUTHORIZATION=f'Bearer {access_token}')
