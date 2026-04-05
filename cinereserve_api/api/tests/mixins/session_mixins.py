@@ -3,6 +3,7 @@ from .movie_mixins import MovieMixin
 import random
 from faker import Faker
 from datetime import datetime, timedelta, time
+from django.utils import timezone
 
 fake = Faker('pt_BR')
 
@@ -58,7 +59,7 @@ class SessionMixin(MovieMixin):
     def create_session(self):
         movie = self.create_movie()
         session = Session.objects.create(
-            date='2026-04-04',
+            date=timezone.now().date() + timedelta(days=1),
             showtime='14:00',
             theater='Sala 2',
             movie=movie
