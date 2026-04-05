@@ -87,7 +87,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_dont_create_new_movie_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         api_url = reverse('movies-list')
         data = {
             "title": "O Mundo Depois de Nós",
@@ -104,7 +104,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_create_new_movie_being_an_admin_and_returns_correct_data_and_code_201_created(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         api_url = reverse('movies-list')
         data = {
             "title": "O Mundo Depois de Nós",
@@ -153,7 +153,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_dont_update_a_movie_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         data = {
             'id': 1,
             "title": "O Mundo Depois de Nós [ALTERAÇÃO]",
@@ -171,7 +171,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_update_a_movie_being_an_admin_and_returns_correct_data_and_code_200_ok(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         movie = self.create_movie()
         update_data = {
             "title": "O Mundo Depois de Nós [ALTERAÇÃO]",
@@ -224,7 +224,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_dont_partial_update_a_movie_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         movie = self.create_movie()
         data = {
             "duration": 130,
@@ -239,7 +239,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_partial_update_a_movie_being_an_admin_and_returns_correct_data_and_code_200_ok(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         movie = self.create_movie()
         update_data = {
             "duration": 130,
@@ -285,7 +285,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_dont_delete_a_movie_without_permission_and_returns_error_403_forbidden(self):
-        access_token = self.get_normal_user_jwt_access_token(username='usertest', password='Password123#')
+        access_token = self.get_user_access_token()
         movie = self.create_movie()
         api_url = reverse('movies-detail', args=[movie.id])
         response = self.client.delete(api_url, HTTP_AUTHORIZATION=f'Bearer {access_token}')
@@ -295,7 +295,7 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
         )
 
     def test_movie_delete_a_movie_being_an_admin_and_returns_code_204_no_content(self):
-        access_token = self.get_admin_user_jwt_access_token(username='admin', password='Admin123#')
+        access_token = self.get_admin_access_token()
         movie = self.create_movie()
         api_url = reverse('movies-detail', args=[movie.id])
         response = self.client.delete(api_url, HTTP_AUTHORIZATION=f'Bearer {access_token}')
@@ -303,9 +303,3 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
             response.status_code,
             204
         )
-
-
-    
-
-
-
