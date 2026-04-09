@@ -1,0 +1,9 @@
+[run]
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+
+[report]
+exclude_lines =
+    pragma: no cover
