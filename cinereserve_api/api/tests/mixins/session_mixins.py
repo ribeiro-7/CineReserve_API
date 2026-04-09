@@ -11,7 +11,7 @@ class SessionMixin(MovieMixin):
     def create_sessions(self, movies_number, sessions_number):
         def generate_future_date(max_days_ahead=30):
             today = datetime.now().date()
-            days_ahead = random.randint(0, max_days_ahead)
+            days_ahead = random.randint(1, max_days_ahead)
             return today + timedelta(days=days_ahead)
 
         GENRES = [
