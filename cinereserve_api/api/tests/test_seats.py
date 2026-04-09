@@ -4,8 +4,13 @@ from .mixins import seat_mixins, jwt_mixins
 from django.utils import timezone
 from datetime import timedelta
 from api.tasks import update_seat_status_after_timeout
+from django.core.cache import cache
+
 
 class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
+    def setUp(self):
+        cache.clear()
+        
     def test_seat_list_returns_status_code_200_ok(self):
         session = self.create_session()
         api_url = reverse('sessions-seats', args=[session.id])
@@ -80,7 +85,7 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
         self.assertEqual(trying_to_reserve_with_different_user.status_code, 400)
         self.assertEqual(
             trying_to_reserve_with_different_user.data.get('error'),
-            "This seat is already Reserved"
+            "Already Reserved"
         )
 
     def test_seat_trying_to_reserve_a_seat_thats_already_sold_returns_code_400(self):
@@ -93,7 +98,7 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
         self.assertEqual(trying_to_reserve_sold_seat.status_code, 400)
         self.assertEqual(
             trying_to_reserve_sold_seat.data.get('error'),
-            "This seat is already Sold"
+            "Already Sold"
         )
 
     def test_seat_buy_available_seat_return_ticket_and_code_201(self):
@@ -167,14 +172,27 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
         admin_access_token = self.get_admin_access_token()
         user_access_token = self.get_user_access_token()
         seat = self.create_available_seat()
-        admin_reserve = self.reserve_seat(session_id=seat.session.id, seat_id=seat.id, access_token=admin_access_token)
-        self.assertEqual(admin_reserve.status_code, 200)
+        admin_reserve = self.reserve_seat(
+            session_id=seat.session.id, 
+            seat_id=seat.id, 
+            access_token=admin_access_token
+        )
+        self.assertEqual(admin_reserve.status_code, 
+            200
+        )
         self.assertEqual(
             admin_reserve.data.get('status'),
             'Reserved'
         )
-        user_try_to_buy = self.buy_seat(session_id=seat.session.id, seat_id=seat.id, access_token=user_access_token)
-        self.assertEqual(user_try_to_buy.status_code, 400)
+        user_try_to_buy = self.buy_seat(
+            session_id=seat.session.id, 
+            seat_id=seat.id, 
+            access_token=user_access_token
+        )
+        self.assertEqual(
+            user_try_to_buy.status_code, 
+            400
+        )
         self.assertEqual(
             user_try_to_buy.data.get('error'),
             "This seat is already Reserved"
@@ -207,17 +225,111 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
             user_buying.data.get('ticket-code'),
         )
 
-def test_celery_task_releases_seat_after_timeout(self):
-    seat = self.create_available_seat()
-    self.reserve_seat(
-        session_id=seat.session.id,
-        seat_id=seat.id,
-        access_token=self.get_user_access_token()
-    )
-    seat.refresh_from_db()
-    seat.reserved_until = timezone.now() - timedelta(minutes=1)
-    seat.save()
-    update_seat_status_after_timeout(seat.id)
-    seat.refresh_from_db()
-    self.assertEqual(seat.status, 'Available')
-    self.assertIsNone(seat.reserved_until)
+    def test_celery_task_releases_seat_after_timeout(self):
+        seat = self.create_available_seat()
+        self.reserve_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=self.get_user_access_token()
+        )
+        seat.refresh_from_db()
+        seat.reserved_until = timezone.now() - timedelta(minutes=1)
+        seat.save()
+        update_seat_status_after_timeout(seat.id)
+        seat.refresh_from_db()
+        self.assertEqual(seat.status, 'Available')
+        self.assertIsNone(seat.reserved_until)
+
+    def test_seat_reserve_with_invalid_seat_id_return_code_400(self):
+        seat = self.create_available_seat()
+        response = self.reserve_seat(
+            session_id=seat.session.id,
+            seat_id="abc",
+            access_token=self.get_user_access_token()
+        )
+        self.assertEqual(
+            response.status_code,
+            400
+        )
+        self.assertEqual(
+            response.data.get('error'),
+            'invalid seat id.'
+        )
+
+    def test_seat_reserve_verify_status_and_expire_time_and_reset_to_available(self):
+        user_access_token = self.get_user_access_token()
+        admin_access_token = self.get_admin_access_token()
+        seat = self.create_available_seat()
+        self.reserve_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=admin_access_token
+        )
+        seat.status = 'Reserved'
+        seat.reserved_until = timezone.now() - timedelta(minutes=2)
+        seat.save()
+        seat.refresh_from_db()
+        response = self.reserve_seat(       
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=user_access_token
+        )
+        self.assertEqual(
+            response.status_code,
+            200
+        )
+    
+    def test_seat_reserve_trying_to_reserve_a_seat_already_reserved_for_another_user(self):
+        user_access_token = self.get_user_access_token()
+        admin_access_token = self.get_admin_access_token()
+        seat = self.create_available_seat()
+        self.reserve_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=admin_access_token
+        )
+        response = self.reserve_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=user_access_token
+        )
+        self.assertEqual(
+            response.status_code,
+            400
+        )
+        self.assertEqual(
+            response.data.get('error'),
+            'Already Reserved'
+        )
+
+    def test_seat_buy_verify_status_and_expire_time_and_reset_to_available(self):
+        user_access_token = self.get_user_access_token()
+        seat = self.create_available_seat()
+        seat.status = 'Reserved'
+        seat.reserved_until = timezone.now() - timedelta(minutes=2)
+        seat.save()
+        response = self.buy_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=user_access_token
+        )
+        self.assertEqual(
+            response.status_code, 
+            201
+        )
+
+    def test_seat_buy_with_invalid_seat_id_return_code_400(self):
+        seat = self.create_available_seat()
+        response = self.buy_seat(
+            session_id=seat.session.id,
+            seat_id="abc",
+            access_token=self.get_user_access_token()
+        )
+        self.assertEqual(
+            response.status_code,
+            400
+        )
+        self.assertEqual(
+            response.data.get('error'),
+            'invalid seat id.'
+        )
