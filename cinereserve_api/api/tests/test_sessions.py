@@ -8,6 +8,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         cache.clear()
 
     def test_session_list_returns_status_code_200_ok(self):
+        self.create_session()
         api_url = reverse('sessions-list')
         response = self.client.get(api_url)
         self.assertEqual(
@@ -38,8 +39,8 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
             200
         )
         self.assertEqual(
-            response.status_code,
-            200
+            len(response.data.get('results')),
+            pagination
         )
 
     def test_session_retrieve_return_correct_session_and_code_200_ok(self):
@@ -219,4 +220,28 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         self.assertEqual(
             response.status_code,
             204
+        )
+    
+    def test_if_action_retrieve_returns_session_detail_serializer(self):
+        session = self.create_session()
+        api_url = reverse('sessions-detail', args=[session.id])
+        response = self.client.get(api_url)
+        self.assertEqual(
+            response.status_code,
+            200
+        )
+        self.assertIsNotNone(
+            response.data.get('movie')
+        )
+    
+    def test_if_action_list_returns_session_serializer(self):
+        self.create_session()
+        api_url = reverse('sessions-list')
+        response = self.client.get(api_url)
+        self.assertEqual(
+            response.status_code,
+            200
+        )
+        self.assertIsNone(
+            response.data.get('movie')
         )
