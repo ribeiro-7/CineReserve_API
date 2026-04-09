@@ -30,6 +30,17 @@ class JWTMixin:
         acess_token = response.data.get('access')
         return acess_token
     
+    def get_user_and_access_token(self):
+        user_data = {
+            'username': 'usertest',
+            'password': 'Password123#'
+        }
+        user = self.make_user(username=user_data.get('username'), password=user_data.get('password'))
+        api_url = reverse('token_obtain_pair')
+        response = self.client.post(api_url, user_data, format='json')
+        acess_token = response.data.get('access')
+        return user, acess_token
+    
     def get_admin_access_token(self):
         super_user_data = {
             'username': 'admin',
