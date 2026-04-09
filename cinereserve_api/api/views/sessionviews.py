@@ -47,18 +47,23 @@ class SessionViewSet(ModelViewSet):
     def reserve(self, request, pk=None):
         session = self.get_object()
         seat_id = request.data.get('seat_id')
-
-        if not seat_id:
-            return Response({'error': 'seat_id invalid.'}, status=status.HTTP_400_BAD_REQUEST)
         
+        try:
+            seat_id = int(seat_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'invalid seat id.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         seat_session = get_object_or_404(
             SeatSession.objects.select_for_update(),
             id=seat_id,
             session=session
         )
 
-        if seat_session.status == 'Reserved' and seat_session.reserved_until:
-            if seat_session.reserved_until <= timezone.now():
+        if seat_session.status == 'Reserved':
+            if seat_session.reserved_until and seat_session.reserved_until <= timezone.now():
                 seat_session.status = 'Available'
                 seat_session.reserved_until = None
                 seat_session.reserved_by = None
@@ -80,7 +85,7 @@ class SessionViewSet(ModelViewSet):
                 'expires_at': localtime(expires_at).strftime("%d/%m/%Y - %H:%M:%S")
             }, status=status.HTTP_200_OK)
         
-        return Response({'error': f'This seat is already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': f'Already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], throttle_classes=[BuyRateThrottle])
     @transaction.atomic
@@ -88,8 +93,13 @@ class SessionViewSet(ModelViewSet):
         session = self.get_object()
         seat_id = request.data.get('seat_id')
 
-        if not seat_id:
-            return Response({'error': 'seat_id invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            seat_id = int(seat_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'invalid seat id.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         seat_session = get_object_or_404(
             SeatSession.objects.select_for_update(),
@@ -103,9 +113,6 @@ class SessionViewSet(ModelViewSet):
                 seat_session.reserved_until = None
                 seat_session.reserved_by = None
                 seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
-
-        elif seat_session.status == 'Reserved' and seat_session.reserved_by != request.user:
-            return Response({'error': 'This seat is reserved'}, status=status.HTTP_400_BAD_REQUEST)
 
         if seat_session.status == 'Available' or (seat_session.status == 'Reserved' and seat_session.reserved_by == request.user):
             seat_session.status = 'Sold'
