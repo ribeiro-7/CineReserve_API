@@ -3,20 +3,27 @@ from celery import shared_task
 from api.models import SeatSession
 from django.core.mail import send_mail
 from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 @shared_task
 def update_seat_status_after_timeout(seat_session_id):
-
-    try:
-        with transaction.atomic():
-            seat_session = SeatSession.objects.select_for_update().get(id=seat_session_id)
-            if seat_session.status == 'Reserved':
-                    seat_session.status = 'Available'
-                    seat_session.reserved_until = None
-                    seat_session.reserved_by = None
-                    seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
-    except SeatSession.DoesNotExist:
-        pass
+    with transaction.atomic():
+        seat_session = (
+            SeatSession.objects
+            .select_for_update()
+            .filter(id=seat_session_id)
+            .first()
+        )
+        if not seat_session:
+            logger.info(f"SeatSession {seat_session_id} not found.")
+            return 
+        if (seat_session.status == 'Reserved' and seat_session.reserved_until and seat_session.reserved_until < timezone.now()):
+            seat_session.status = 'Available'
+            seat_session.reserved_until = None
+            seat_session.reserved_by = None
+            seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
 
 @shared_task
 def send_ticket_email(user_email, movie, seat, code):
