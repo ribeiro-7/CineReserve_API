@@ -303,3 +303,54 @@ class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):
             response.status_code,
             204
         )
+
+    #Rate limiting tests
+    def test_rate_limiting_in_non_user_movie_list(self):
+        self.create_movies(movies_number=10)
+        api_url = reverse('movies-list')
+        responses = []
+        for m in range(16):
+            response = self.client.get(api_url)
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+
+    def test_rate_limiting_in_user_movie_list(self):
+        user_access_token = self.get_user_access_token()
+        self.create_movies(movies_number=10)
+        api_url = reverse('movies-list')
+        responses = []
+        for m in range(31):
+            response = self.client.get(api_url, HTTP_AUTHORIZATION=f'Bearer {user_access_token}')
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+    
+    def test_rate_limiting_in_non_user_movie_retrieve(self):
+        movie = self.create_movie()
+        api_url = reverse('movies-detail', args=[movie.id])
+        responses = []
+        for m in range(16):
+            response = self.client.get(api_url)
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+
+    def test_rate_limiting_in_user_movie_retrieve(self):
+        user_access_token = self.get_user_access_token()
+        movie = self.create_movie()
+        api_url = reverse('movies-detail', args=[movie.id])
+        responses = []
+        for m in range(31):
+            response = self.client.get(api_url, HTTP_AUTHORIZATION=f'Bearer {user_access_token}')
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )

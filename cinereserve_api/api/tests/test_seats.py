@@ -3,8 +3,9 @@ from django.urls import reverse
 from .mixins import seat_mixins, jwt_mixins
 from django.utils import timezone
 from datetime import timedelta
-from api.tasks import update_seat_status_after_timeout
+from api.tasks import update_seat_status_after_timeout, send_ticket_email
 from django.core.cache import cache
+from unittest.mock import patch
 
 
 class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
@@ -240,6 +241,32 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
         self.assertEqual(seat.status, 'Available')
         self.assertIsNone(seat.reserved_until)
 
+    def test_celery_task_when_if_not_seat_session(self):
+        logger_name = 'api.tasks'
+        with self.assertLogs(logger_name, level='INFO') as log:
+            update_seat_status_after_timeout(seat_session_id=999)
+        self.assertIn(
+            "SeatSession 999 not found",
+            log.output[0]
+        )
+
+    @patch('api.views.sessionviews.send_ticket_email.delay')
+    def test_celery_task_send_email_after_purchase(self, mock_send_email):
+        user, user_access_token = self.get_user_and_access_token()
+        seat = self.create_available_seat()
+        response = self.buy_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=user_access_token
+        )
+        self.assertEqual(response.status_code, 201)
+        mock_send_email.assert_called_once_with(
+            user.email,
+            response.data.get('movie'),
+            response.data.get('seat'),
+            response.data.get('ticket-code')
+        )
+
     def test_seat_reserve_with_invalid_seat_id_return_code_400(self):
         seat = self.create_available_seat()
         response = self.reserve_seat(
@@ -332,4 +359,62 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
         self.assertEqual(
             response.data.get('error'),
             'invalid seat id.'
+        )
+    
+    #Rate limiting tests
+    def test_rate_limiting_in_non_user_seat_retrieve(self):
+        session = self.create_session()
+        api_url = reverse('sessions-seats', args=[session.id])
+        responses = []
+        for s in range(16):
+            response = self.client.get(api_url)
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+    
+    def test_rate_limiting_in_user_seat_retrieve(self):
+        user_access_token = self.get_user_access_token()
+        session = self.create_session()
+        api_url = reverse('sessions-seats', args=[session.id])
+        responses = []
+        for s in range(31):
+            response = self.client.get(api_url, HTTP_AUTHORIZATION=f'Bearer {user_access_token}')
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+
+    def test_rate_limiting_in_seat_reserve(self):
+        user_access_token = self.get_user_access_token()
+        seat = self.create_available_seat()
+        responses = []
+        for s in range(11):
+            response = self.reserve_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=user_access_token
+        )
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+
+    def test_rate_limiting_in_seat_buy(self):
+        user_access_token = self.get_user_access_token()
+        seat = self.create_available_seat()
+        responses = []
+        for s in range(11):
+            response = self.buy_seat(
+            session_id=seat.session.id,
+            seat_id=seat.id,
+            access_token=user_access_token
+        )
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
         )

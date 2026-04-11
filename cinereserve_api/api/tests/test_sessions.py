@@ -45,8 +45,7 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
 
     def test_session_retrieve_return_correct_session_and_code_200_ok(self):
         session = self.create_session()
-        session_id = session.id
-        api_url = reverse('sessions-detail', args=[session_id])
+        api_url = reverse('sessions-detail', args=[session.id])
         response = self.client.get(api_url)
         self.assertEqual(
             response.status_code,
@@ -244,4 +243,55 @@ class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionM
         )
         self.assertIsNone(
             response.data.get('movie')
+        )
+
+    #rate limiting tests
+    def test_rate_limiting_non_user_in_session_list(self):
+        self.create_sessions(movies_number=5, sessions_number=3)
+        api_url = reverse('sessions-list')
+        responses = []
+        for i in range(20):
+            response = self.client.get(api_url)
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+
+    def test_rate_limiting_user_in_session_list(self):
+        user_access_token = self.get_user_access_token()
+        self.create_sessions(movies_number=5, sessions_number=3)
+        api_url = reverse('sessions-list')
+        responses = []
+        for i in range(31):
+            response = self.client.get(api_url, HTTP_AUTHORIZATION=f'Bearer {user_access_token}')
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+    
+    def test_rate_limiting_in_non_user_session_retrieve(self):
+        session = self.create_session()
+        api_url = reverse('sessions-detail', args=[session.id])
+        responses = []
+        for i in range(20):
+            response = self.client.get(api_url)
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
+        )
+
+    def test_rate_limiting_user_in_session_retrieve(self):
+        user_access_token = self.get_user_access_token()
+        session = self.create_session()
+        api_url = reverse('sessions-detail', args=[session.id])
+        responses = []
+        for i in range(31):
+            response = self.client.get(api_url, HTTP_AUTHORIZATION=f'Bearer {user_access_token}')
+            responses.append(response.status_code)
+        self.assertIn(
+            429,
+            responses
         )
