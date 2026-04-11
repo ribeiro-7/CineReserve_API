@@ -3,7 +3,7 @@ from rest_framework.throttling import SimpleRateThrottle, UserRateThrottle
 from rest_framework.throttling import SimpleRateThrottle
 
 class SeatsRateThrottle(SimpleRateThrottle):
-    scope = 'seats'
+    scope = 'seat'
 
     def get_cache_key(self, request, view):
         if request.user and request.user.is_authenticated:
@@ -20,7 +20,7 @@ class SeatsRateThrottle(SimpleRateThrottle):
         return '15/min'
     
 class SessionReadRateThrottle(SimpleRateThrottle):
-    scope = 'session_read'
+    scope = 'session'
 
     def get_cache_key(self, request, view):
         if request.user and request.user.is_authenticated:
