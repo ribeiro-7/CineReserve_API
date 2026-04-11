@@ -1,4 +1,5 @@
 from api.models import Movie
+from api.throttles import MovieRateThrottle
 from api.serializers.movieserializers import MovieListSerializer, MovieDetailWithSessionSerializer
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import PageNumberPagination
@@ -24,3 +25,8 @@ class MovieViewSet(ModelViewSet):
         if self.action in ['create', 'partial_update', 'update', 'destroy']:
             return [IsAdminUser()]
         return [AllowAny()]
+
+    def get_throttles(self):
+        if self.action in ['list', 'retrieve']:
+            return [MovieRateThrottle()]
+        return super().get_throttles()

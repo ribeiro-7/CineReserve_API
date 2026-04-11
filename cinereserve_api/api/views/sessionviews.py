@@ -16,7 +16,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 import uuid
-from api.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle
+from api.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
 from django.utils.timezone import localtime
 
 
@@ -24,8 +24,7 @@ class SessionPagination(PageNumberPagination):
     page_size = 5
 
 
-@method_decorator(cache_page(30), name='list')
-@method_decorator(cache_page(30), name='retrieve')
+@method_decorator(cache_page(60), name='list')
 class SessionViewSet(ModelViewSet):
     queryset = Session.objects.filter(date__gte=timezone.now().date()).order_by('date', 'showtime').prefetch_related('movie', Prefetch(
         'seats', 
@@ -153,3 +152,8 @@ class SessionViewSet(ModelViewSet):
         elif self.action in ['reserve', 'buy']:
             return [IsAuthenticated()]
         return [AllowAny()]
+    
+    def get_throttles(self):
+        if self.action in ['list', 'retrieve']:
+            return [SessionReadRateThrottle()]
+        return super().get_throttles()
