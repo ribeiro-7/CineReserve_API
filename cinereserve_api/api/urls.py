@@ -12,7 +12,7 @@ router.register(r'movies', views.MovieViewSet, basename='movies')
 router.register(r'sessions', views.SessionViewSet, basename='sessions')
 
 urlpatterns = [
-    path('register/', views.RegisterUserView.as_view(), name='Register User'),
+    path('register/', views.RegisterUserView.as_view(), name='register'),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('verify/', TokenVerifyView.as_view(), name='token_verify'),
