@@ -14,7 +14,6 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         }
 
     def validate_password(self, value):
-        validate_password(value)
         password_validator(value)
         return value
 
