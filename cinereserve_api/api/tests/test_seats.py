@@ -6,6 +6,8 @@ from datetime import timedelta
 from api.tasks import update_seat_status_after_timeout, send_ticket_email
 from django.core.cache import cache
 from unittest.mock import patch
+import threading
+from django.db import connections
 
 
 class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
@@ -361,7 +363,6 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
             'invalid seat id.'
         )
     
-    #Rate limiting tests
     def test_rate_limiting_in_non_user_seat_retrieve(self):
         session = self.create_session()
         api_url = reverse('sessions-seats', args=[session.id])
@@ -416,5 +417,106 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
             responses.append(response.status_code)
         self.assertIn(
             429,
+            responses
+        )
+
+    def test_trying_to_reserve_seat_thats_already_passed_error_400(self):
+        user_access_token = self.get_user_access_token()
+        expired_seat = self.create_expired_seat()
+        response = self.reserve_seat(
+            session_id=expired_seat.session.id,
+            seat_id=expired_seat.id,
+            access_token=user_access_token
+        )
+        self.assertEqual(
+            response.status_code,
+            400
+        )
+        self.assertEqual(
+            response.data.get('error'),
+            'The session has already passed.'
+        )
+
+    def test_trying_to_buy_seat_thats_already_passed_error_400(self):
+        user_access_token = self.get_user_access_token()
+        expired_seat = self.create_expired_seat()
+        response = self.buy_seat(
+            session_id=expired_seat.session.id,
+            seat_id=expired_seat.id,
+            access_token=user_access_token
+        )
+        self.assertEqual(
+            response.status_code,
+            400
+        )
+        self.assertEqual(
+            response.data.get('error'),
+            'The session has already passed.'
+        )
+
+class SeatConcurrencyTest(test.APITransactionTestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
+    def test_concurrent_reserve_same_seat(self):
+        user1 = self.get_user_access_token()
+        user2 = self.get_admin_access_token()
+        seat = self.create_available_seat()
+        responses = []
+        def reserve(user):
+            client = test.APIClient()
+            client.credentials(HTTP_AUTHORIZATION=f'Bearer {user}')
+            response = client.post(
+                reverse('sessions-reserve', args=[seat.session.id]),
+                {'seat_id': seat.id}
+            )
+            responses.append(response.status_code)
+            connections.close_all()
+
+        t1 = threading.Thread(target=reserve, args=(user1,))
+        t2 = threading.Thread(target=reserve, args=(user2,))
+
+        t1.start()
+        t2.start()
+
+        t1.join()
+        t2.join()
+
+        self.assertIn(
+            200,
+            responses
+        )
+        self.assertIn(
+            400,
+            responses
+        )
+
+    def test_concurrent_buy_same_seat(self):
+        user1 = self.get_user_access_token()
+        user2 = self.get_admin_access_token()
+        seat = self.create_available_seat()
+        responses = []
+        def buy(user):
+            client = test.APIClient()
+            client.credentials(HTTP_AUTHORIZATION=f'Bearer {user}')
+            response = client.post(
+                reverse('sessions-buy', args=[seat.session.id]),
+                {'seat_id': seat.id}
+            )
+            responses.append(response.status_code)
+            connections.close_all()
+
+        t1 = threading.Thread(target=buy, args=(user1,))
+        t2 = threading.Thread(target=buy, args=(user2,))
+
+        t1.start()
+        t2.start()
+
+        t1.join()
+        t2.join()
+
+        self.assertIn(
+            201,
+            responses
+        )
+        self.assertIn(
+            400,
             responses
         )
