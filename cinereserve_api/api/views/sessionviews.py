@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from api.tasks import update_seat_status_after_timeout, send_ticket_email
 from rest_framework import status
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Q, Prefetch
 from django.shortcuts import get_object_or_404
 import uuid
 from api.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
@@ -23,14 +23,9 @@ from django.utils.timezone import localtime
 class SessionPagination(PageNumberPagination):
     page_size = 5
 
-
 @method_decorator(cache_page(60), name='list')
 class SessionViewSet(ModelViewSet):
-    queryset = Session.objects.filter(date__gte=timezone.now().date()).order_by('date', 'showtime').prefetch_related('movie', Prefetch(
-        'seats', 
-        queryset=SeatSession.objects.select_related('seat').order_by('seat__row', 'seat__number')
-    ))
-    
+
     pagination_class = SessionPagination
 
     @action(detail=True, methods=['get'], throttle_classes=[SeatsRateThrottle])
@@ -39,7 +34,6 @@ class SessionViewSet(ModelViewSet):
         seats = session.seats.select_related('seat').order_by('seat__row', 'seat__number')
         serializer = SeatSessionSerializer(seats, many=True)
         return Response(serializer.data)
-    
 
     @action(detail=True, methods=['post'], throttle_classes=[ReserveRateThrottle])
     @transaction.atomic
@@ -58,33 +52,39 @@ class SessionViewSet(ModelViewSet):
         seat_session = get_object_or_404(
             SeatSession.objects.select_for_update(),
             id=seat_id,
-            session=session
+            session=session.id
         )
 
-        if seat_session.status == 'Reserved':
-            if seat_session.reserved_until and seat_session.reserved_until <= timezone.now():
-                seat_session.status = 'Available'
-                seat_session.reserved_until = None
-                seat_session.reserved_by = None
-                seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
+        now = timezone.now()
+        today = now.date()
+        current_time = now.time()
 
-        if seat_session.status == 'Available':
-            seat_session.status = 'Reserved'
-            seat_session.reserved_until = timezone.now() + timedelta(minutes=5)
-            expires_at = seat_session.reserved_until
-            seat_session.reserved_by = request.user
-            seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
-            update_seat_status_after_timeout.apply_async(
-            args=[seat_session.id],
-            countdown=300
-            )
-            return Response({
-                'seat': f'{seat_session.seat.row}{seat_session.seat.number}',
-                'status': seat_session.status,
-                'expires_at': localtime(expires_at).strftime("%d/%m/%Y - %H:%M:%S")
-            }, status=status.HTTP_200_OK)
-        
-        return Response({'error': f'Already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
+        if session.date > today or (session.date == today and session.showtime > current_time):
+            if seat_session.status == 'Reserved':
+                if seat_session.reserved_until and seat_session.reserved_until <= now:
+                    seat_session.status = 'Available'
+                    seat_session.reserved_until = None
+                    seat_session.reserved_by = None
+                    seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
+
+            if seat_session.status == 'Available':
+                seat_session.status = 'Reserved'
+                seat_session.reserved_until = now + timedelta(minutes=5)
+                expires_at = seat_session.reserved_until
+                seat_session.reserved_by = request.user
+                seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
+                update_seat_status_after_timeout.apply_async(
+                args=[seat_session.id],
+                countdown=300
+                )
+                return Response({
+                    'seat': f'{seat_session.seat.row}{seat_session.seat.number}',
+                    'status': seat_session.status,
+                    'expires_at': localtime(expires_at).strftime("%d/%m/%Y - %H:%M:%S")
+                }, status=status.HTTP_200_OK)
+            
+            return Response({'error': f'Already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'The session has already passed.'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], throttle_classes=[BuyRateThrottle])
     @transaction.atomic
@@ -103,42 +103,49 @@ class SessionViewSet(ModelViewSet):
         seat_session = get_object_or_404(
             SeatSession.objects.select_for_update(),
             id=seat_id,
-            session=session
+            session=session.id
         )
-        
-        if seat_session.status == 'Reserved':
-            if seat_session.reserved_until and seat_session.reserved_until < timezone.now():
-                seat_session.status = 'Available'
+
+        now = timezone.now()
+        today = now.date()
+        current_time = now.time()
+
+
+        if session.date > today or (session.date == today and session.showtime > current_time):
+            if seat_session.status == 'Reserved':
+                if seat_session.reserved_until and seat_session.reserved_until < now:
+                    seat_session.status = 'Available'
+                    seat_session.reserved_until = None
+                    seat_session.reserved_by = None
+                    seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
+
+            if seat_session.status == 'Available' or (seat_session.status == 'Reserved' and seat_session.reserved_by == request.user):
+                seat_session.status = 'Sold'
                 seat_session.reserved_until = None
                 seat_session.reserved_by = None
                 seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
 
-        if seat_session.status == 'Available' or (seat_session.status == 'Reserved' and seat_session.reserved_by == request.user):
-            seat_session.status = 'Sold'
-            seat_session.reserved_until = None
-            seat_session.reserved_by = None
-            seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
+                ticket = Ticket.objects.create(
+                    user=request.user,
+                    seat_session=seat_session,
+                    code=str(uuid.uuid4())
+                )
 
-            ticket = Ticket.objects.create(
-                user=request.user,
-                seat_session=seat_session,
-                code=str(uuid.uuid4())
-            )
+                send_ticket_email.delay(
+                    request.user.email,
+                    seat_session.session.movie.title,
+                    f"{seat_session.seat.row}{seat_session.seat.number}",
+                    ticket.code
+                )
 
-            send_ticket_email.delay(
-                request.user.email,
-                seat_session.session.movie.title,
-                f"{seat_session.seat.row}{seat_session.seat.number}",
-                ticket.code
-            )
-
-            return Response({
-                'movie': f'{seat_session.session.movie.title}',
-                'seat': f"{seat_session.seat.row}{seat_session.seat.number}",
-                'ticket-code': ticket.code,
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response({'error': f'This seat is already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    'movie': f'{seat_session.session.movie.title}',
+                    'seat': f"{seat_session.seat.row}{seat_session.seat.number}",
+                    'ticket-code': ticket.code,
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response({'error': f'This seat is already {seat_session.status}'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'The session has already passed.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
     def get_serializer_class(self):
@@ -157,3 +164,21 @@ class SessionViewSet(ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [SessionReadRateThrottle()]
         return super().get_throttles()
+    
+    def get_queryset(self):
+        now = timezone.now()
+        base_queryset = Session.objects.all().order_by('date', 'showtime').prefetch_related(
+            'movie',
+            Prefetch(
+                'seats',
+                queryset=SeatSession.objects.select_related('seat').order_by('seat__row', 'seat__number')
+            )
+        )
+
+        if self.action == 'list':
+            return base_queryset.filter(
+                Q(date__gt=now.date()) |
+                Q(date=now.date(), showtime__gte=now.time())
+            )
+        
+        return base_queryset
