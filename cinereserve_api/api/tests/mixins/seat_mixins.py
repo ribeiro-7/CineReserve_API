@@ -1,6 +1,8 @@
 from api.models import Seat, SeatSession
 from .session_mixins import SessionMixin
 from django.urls import reverse
+from django.utils import timezone
+from datetime import timedelta
 
 class SeatMixin(SessionMixin):
     def create_seats(self, rows=5, number=10):
@@ -35,6 +37,23 @@ class SeatMixin(SessionMixin):
             status='Available'
         )
         
+        return seat_session
+    
+    def create_expired_seat(self, row='A', number='1'):
+        session = self.create_session()
+        seat = Seat.objects.create(
+            row=row,
+            number=number
+        )
+        seat_session = SeatSession.objects.create(
+            session=session,
+            seat=seat,
+            status='Available'
+        )
+        now = timezone.localtime()
+        session.date = now.date() - timedelta(days=1)
+        session.showtime = (now - timedelta(hours=2)).time()
+        session.save()
         return seat_session
 
     def reserve_seat(self, session_id, seat_id, access_token):
