@@ -4,6 +4,7 @@ from tickets.serializers import TicketSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from api.throttles import TicketRateThrottle
+from django.db.models import Q
 
 
 class TicketViewSet(ModelViewSet):
@@ -16,15 +17,26 @@ class TicketViewSet(ModelViewSet):
         queryset = Ticket.objects.filter(user=self.request.user)
 
         ticket_type = self.request.query_params.get('type')
+        now = timezone.now()
+        today = now.date()
+        current_time = now.time()
 
         if ticket_type == 'upcoming':
             return queryset.filter(
-                seat_session__session__date__gte=timezone.now().date()
+                Q(seat_session__session__date__gte=today) |
+                Q(
+                    seat_session__session__date=today,
+                    seat_session__session__showtime__gte=current_time
+                )
             )
-        
+            
         elif ticket_type == 'past':
             return queryset.filter(
-                seat_session__session__date__lt=timezone.now().date()
+            Q(seat_session__session__date__lt=today) |
+            Q(
+                seat_session__session__date=today,
+                seat_session__session__showtime__lt=current_time
             )
+        )
 
         return queryset
