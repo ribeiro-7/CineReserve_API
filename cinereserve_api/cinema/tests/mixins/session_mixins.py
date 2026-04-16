@@ -1,4 +1,4 @@
-from api.models import Session, Movie
+from cinema.models import Session, Movie
 from .movie_mixins import MovieMixin
 import random
 from faker import Faker

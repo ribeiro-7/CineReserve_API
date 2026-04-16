@@ -1,9 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
-from tickets.models import Ticket
-from tickets.serializers import TicketSerializer
+from booking.models import Ticket
+from booking.serializers import TicketSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from api.throttles import TicketRateThrottle
+from cinema.throttles import TicketRateThrottle
 from django.db.models import Q
 
 

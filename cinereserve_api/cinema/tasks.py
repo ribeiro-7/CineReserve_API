@@ -1,6 +1,6 @@
 from django.utils import timezone
 from celery import shared_task
-from api.models import SeatSession
+from cinema.models import SeatSession
 from django.core.mail import send_mail
 from django.db import transaction
 import logging

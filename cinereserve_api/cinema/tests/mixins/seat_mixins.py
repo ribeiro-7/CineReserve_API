@@ -1,4 +1,4 @@
-from api.models import Seat, SeatSession
+from cinema.models import Seat, SeatSession
 from .session_mixins import SessionMixin
 from django.urls import reverse
 from django.utils import timezone

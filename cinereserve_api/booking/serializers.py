@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from tickets.models import Ticket
+from booking.models import Ticket
 
 class TicketSerializer(serializers.ModelSerializer):
     purchased_at = serializers.DateTimeField(format="%d/%m/%Y - %H:%M:%S", read_only=True)

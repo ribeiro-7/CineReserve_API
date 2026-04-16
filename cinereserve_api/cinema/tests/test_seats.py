@@ -3,7 +3,7 @@ from django.urls import reverse
 from .mixins import seat_mixins, jwt_mixins
 from django.utils import timezone
 from datetime import timedelta
-from api.tasks import update_seat_status_after_timeout, send_ticket_email
+from cinema.tasks import update_seat_status_after_timeout, send_ticket_email
 from django.core.cache import cache
 from unittest.mock import patch
 import threading
@@ -244,7 +244,7 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
         self.assertIsNone(seat.reserved_until)
 
     def test_celery_task_when_if_not_seat_session(self):
-        logger_name = 'api.tasks'
+        logger_name = 'cinema.tasks'
         with self.assertLogs(logger_name, level='INFO') as log:
             update_seat_status_after_timeout(seat_session_id=999)
         self.assertIn(
@@ -252,7 +252,7 @@ class SeatTest(test.APITestCase, seat_mixins.SeatMixin, jwt_mixins.JWTMixin):
             log.output[0]
         )
 
-    @patch('api.views.sessionviews.send_ticket_email.delay')
+    @patch('cinema.views.sessionviews.send_ticket_email.delay')
     def test_celery_task_send_email_after_purchase(self, mock_send_email):
         user, user_access_token = self.get_user_and_access_token()
         seat = self.create_available_seat()

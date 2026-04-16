@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Movie, Session
+from cinema.models import Movie, Session
 
 
 class BaseMovieSerializer(serializers.ModelSerializer):

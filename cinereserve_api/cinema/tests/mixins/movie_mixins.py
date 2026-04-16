@@ -1,4 +1,4 @@
-from api.models import Movie
+from cinema.models import Movie
 
 class MovieMixin:
     def create_movies(self, movies_number):

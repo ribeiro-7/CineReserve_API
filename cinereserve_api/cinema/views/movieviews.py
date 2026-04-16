@@ -1,6 +1,6 @@
-from api.models import Movie
-from api.throttles import MovieRateThrottle
-from api.serializers.movieserializers import MovieListSerializer, MovieDetailWithSessionSerializer
+from cinema.models import Movie
+from cinema.throttles import MovieRateThrottle
+from cinema.serializers.movieserializers import MovieListSerializer, MovieDetailWithSessionSerializer
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, AllowAny

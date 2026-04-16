@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from api.models import SeatSession
+from cinema.models import SeatSession
 
 class Ticket(models.Model):
     code = models.CharField(max_length=100, unique=True)

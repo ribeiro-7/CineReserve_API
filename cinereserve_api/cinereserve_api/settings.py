@@ -21,9 +21,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
-    'api',
+    'cinema',
     'rest_framework',
-    'tickets',
+    'booking',
     'rest_framework_simplejwt.token_blacklist',
 ]
 

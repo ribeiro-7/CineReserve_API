@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import SeatSession
+from cinema.models import SeatSession
 from .base_serializers import SessionSerializer
 from .movieserializers import MovieDetailWithoutSession
 

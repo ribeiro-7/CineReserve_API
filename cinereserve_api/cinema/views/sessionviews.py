@@ -1,6 +1,6 @@
-from api.models import Session, SeatSession
-from tickets.models import Ticket
-from api.serializers.sessionserializers import SeatSessionSerializer, SessionDetailSerializer, SessionSerializer
+from cinema.models import Session, SeatSession
+from booking.models import Ticket
+from cinema.serializers.sessionserializers import SeatSessionSerializer, SessionDetailSerializer, SessionSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
@@ -10,13 +10,13 @@ from django.utils import timezone
 from datetime import timedelta
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from api.tasks import update_seat_status_after_timeout, send_ticket_email
+from cinema.tasks import update_seat_status_after_timeout, send_ticket_email
 from rest_framework import status
 from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.shortcuts import get_object_or_404
 import uuid
-from api.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
+from cinema.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
 from django.utils.timezone import localtime
 
 

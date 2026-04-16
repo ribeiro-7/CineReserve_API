@@ -1,7 +1,7 @@
 import random
 from faker import Faker
 from datetime import datetime, timedelta, time
-from api.models import Movie, Session, Seat
+from cinema.models import Movie, Session, Seat
 
 fake = Faker('pt_BR')
 

@@ -1,5 +1,5 @@
 from rest_framework import test
-from api.tests.mixins import jwt_mixins, seat_mixins
+from cinema.tests.mixins import jwt_mixins, seat_mixins
 from django.urls import reverse
 from django.core.cache import cache
 from django.utils import timezone

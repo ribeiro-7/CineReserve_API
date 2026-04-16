@@ -1,4 +1,4 @@
-from api.serializers.registerserializer import RegisterUserSerializer
+from cinema.serializers.registerserializer import RegisterUserSerializer
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
