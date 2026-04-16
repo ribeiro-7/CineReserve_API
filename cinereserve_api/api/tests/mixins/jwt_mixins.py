@@ -51,3 +51,30 @@ class JWTMixin:
         response = self.client.post(api_url, super_user_data, format='json')
         access_token = response.data.get('access')
         return access_token
+    
+    def register_user(self, email, username, password):
+        data = {
+            'email': email,
+            'username': username,
+            'password': password
+        }
+        api_url = reverse('register')
+        user = self.client.post(api_url, data=data)
+        user_username = user.data.get('username')
+        return user_username
+    
+    def login_user(self, username, password):
+        data = {
+            'username': username,
+            'password': password
+        }
+        api_url = reverse('token_obtain_pair')
+        login = self.client.post(api_url, data=data)
+        return login
+    
+    def refresh_token(self, refresh_token):
+        data = {'refresh': refresh_token}
+        api_url = reverse('token_refresh')
+        response = self.client.post(api_url, data=data)
+        access_token = response.data.get('access')
+        return response, access_token
