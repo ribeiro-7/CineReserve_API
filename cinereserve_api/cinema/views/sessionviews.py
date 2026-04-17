@@ -14,7 +14,6 @@ from cinema.tasks import update_seat_status_after_timeout, send_ticket_email
 from rest_framework import status
 from django.db import transaction
 from django.db.models import Q, Prefetch
-from django.shortcuts import get_object_or_404
 import uuid
 from cinema.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
 from django.utils.timezone import localtime
