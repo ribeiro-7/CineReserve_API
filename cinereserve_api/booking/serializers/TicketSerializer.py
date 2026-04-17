@@ -11,8 +11,8 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ['id', 'code', 'purchased_at', 'seat_session', 'movie_title', 'showtime', 'date', 'theater', 'seat']
-        read_only_fields = ['id', 'code', 'purchased_at']
+        fields = ['code', 'purchased_at', 'movie_title', 'showtime', 'date', 'theater', 'seat']
+        read_only_fields = ['code', 'purchased_at']
 
     def get_seat(self, obj):
         return f'{obj.seat_session.seat.row}{obj.seat_session.seat.number}'
