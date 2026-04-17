@@ -26,17 +26,19 @@ def update_seat_status_after_timeout(seat_session_id):
             seat_session.save(update_fields=['status', 'reserved_until', 'reserved_by'])
 
 @shared_task
-def send_ticket_email(user_email, movie, seat, code):
-    subject = "Your Ticket Confirmation!"
+def send_ticket_email(user_email, movie, tickets):
+    subject = "Your Tickets Confirmation!"
+
+    seats_info = "\n".join(
+        [f"Seat: {t['seat']} | Code: {t['ticket_code']}" for t in tickets]
+    )
 
     message = f"""
-        Your purchase was successful!
+        Your purchase to - "{movie}" - was successful!
 
-        Movie: {movie}
-        Seat: {seat}
-        Ticket Code: {code}
+        {seats_info}
 
-        Enjoy your movie 🍿
+        Enjoy your movie!!!
         """
     
     send_mail(
