@@ -48,6 +48,10 @@ class TicketRateThrottle(UserRateThrottle):
     scope = 'ticket'
     rate = '20/min'
 
+class BookingRateThrottle(UserRateThrottle):
+    scope = 'booking'
+    rate = '20/min'
+
 class MovieRateThrottle(SimpleRateThrottle):
     scope = 'movie'
 
