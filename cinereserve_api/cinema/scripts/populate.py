@@ -19,11 +19,10 @@ GENRES = [
     "Documentário",
 ]
 
-# 🔥 gera datas do presente até X dias no futuro
-def generate_future_date(max_days_ahead=30):
+def generate_mixed_date(past_days=10, future_days=30):
     today = datetime.now().date()
-    days_ahead = random.randint(0, max_days_ahead)
-    return today + timedelta(days=days_ahead)
+    days_offset = random.randint(-past_days, future_days)
+    return today + timedelta(days=days_offset)
 
 
 def run():
@@ -63,7 +62,7 @@ def run():
 
     for movie in movies:
         for _ in range(3):
-            session_date = generate_future_date()
+            session_date = generate_mixed_date()
 
             Session.objects.create(
                 date=session_date,
