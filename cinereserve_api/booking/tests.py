@@ -1,9 +1,10 @@
 from rest_framework import test
-from cinema.tests.mixins import jwt_mixins, seat_mixins
+from cinema.tests.mixins import seat_mixins
 from django.urls import reverse
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
+from accounts.tests.mixins import jwt_mixins
 
 class TicketTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
     def setUp(self):

@@ -1,6 +1,7 @@
 from rest_framework import test
 from django.urls import reverse
-from .mixins import jwt_mixins, session_mixins
+from accounts.tests.mixins import jwt_mixins
+from .mixins import session_mixins
 from django.core.cache import cache
 
 class SessionTest(test.APITestCase, jwt_mixins.JWTMixin, session_mixins.SessionMixin):

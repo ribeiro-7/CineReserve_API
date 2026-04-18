@@ -1,6 +1,7 @@
 from rest_framework import test
 from django.urls import reverse
-from .mixins import seat_mixins, jwt_mixins
+from accounts.tests.mixins import jwt_mixins
+from .mixins import seat_mixins
 from django.utils import timezone
 from datetime import timedelta
 from cinema.tasks import update_seat_status_after_timeout, send_ticket_email

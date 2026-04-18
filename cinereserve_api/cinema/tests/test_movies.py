@@ -1,6 +1,7 @@
 from rest_framework import test
 from django.urls import reverse
-from .mixins import jwt_mixins, movie_mixins
+from accounts.tests.mixins import jwt_mixins
+from .mixins import movie_mixins
 from django.core.cache import cache
 
 class MovieTest(test.APITestCase, jwt_mixins.JWTMixin, movie_mixins.MovieMixin):   
