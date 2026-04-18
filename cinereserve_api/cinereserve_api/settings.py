@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'booking',
     'rest_framework_simplejwt.token_blacklist',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -87,6 +88,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "BLACKLIST_AFTER_ROTATION": True,
+    'ROTATE_REFRESH_TOKENS': True,
     "SINGIN_KEY": os.environ.get('SECRET_KEY', 'INSECURE'),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }

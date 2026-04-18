@@ -1,7 +1,5 @@
 from rest_framework.throttling import SimpleRateThrottle, UserRateThrottle
 
-from rest_framework.throttling import SimpleRateThrottle
-
 class SeatsRateThrottle(SimpleRateThrottle):
     scope = 'seat'
 
@@ -43,14 +41,6 @@ class ReserveRateThrottle(UserRateThrottle):
 class BuyRateThrottle(UserRateThrottle):
     scope = 'buy'
     rate = '10/min'
-
-class TicketRateThrottle(UserRateThrottle):
-    scope = 'ticket'
-    rate = '20/min'
-
-class BookingRateThrottle(UserRateThrottle):
-    scope = 'booking'
-    rate = '20/min'
 
 class MovieRateThrottle(SimpleRateThrottle):
     scope = 'movie'

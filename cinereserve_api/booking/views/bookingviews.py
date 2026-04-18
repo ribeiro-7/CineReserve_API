@@ -3,7 +3,7 @@ from booking.models import Booking
 from booking.serializers.BookingSerializer import BookingSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from cinema.throttles import BookingRateThrottle
+from booking.throttles import BookingRateThrottle
 from django.db.models import Q
 
 class BookingViewSet(ModelViewSet):
