@@ -1,22 +1,9 @@
 from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-    TokenBlacklistView
-)
 
 router = DefaultRouter()
 router.register(r'movies', views.MovieViewSet, basename='movies')
 router.register(r'sessions', views.SessionViewSet, basename='sessions')
 
-urlpatterns = [
-    path('register/', views.RegisterUserView.as_view(), name='register'),
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('verify/', TokenVerifyView.as_view(), name='token_verify'),
-    path('logout/', TokenBlacklistView.as_view(), name='logout'),
-    path('', include(router.urls)),
-]
+urlpatterns = router.urls
