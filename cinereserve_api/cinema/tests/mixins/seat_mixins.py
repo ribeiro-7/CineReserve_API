@@ -40,34 +40,48 @@ class SeatMixin(SessionMixin):
         return seat_session
     
     def create_expired_seat(self, row='A', number='1'):
+        now = timezone.now()
         session = self.create_session()
+        past_datetime = now - timedelta(days=1)
+
+        session.date = past_datetime.date()
+        session.showtime = past_datetime.time()
+        session.save()
+
         seat = Seat.objects.create(
             row=row,
             number=number
         )
+
         seat_session = SeatSession.objects.create(
             session=session,
             seat=seat,
             status='Available'
         )
-        now = timezone.localtime()
-        session.date = now.date() - timedelta(days=1)
-        session.showtime = (now - timedelta(hours=2)).time()
-        session.save()
         return seat_session
 
-    def reserve_seat(self, session_id, seat_id, access_token):
+    def reserve_seats(self, session_id, seat_ids, access_token):
         api_url = reverse('sessions-reserve', args=[session_id])
         data = {
-            'seat_id': seat_id
+            'seat_ids': seat_ids
         }
-        response = self.client.post(api_url, data=data, HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        response = self.client.post(
+            api_url,
+            data=data,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {access_token}'
+        )
         return response
     
-    def buy_seat(self, session_id, seat_id, access_token=None):
+    def buy_seats(self, session_id, seat_ids, access_token=None):
         api_url = reverse('sessions-buy', args=[session_id])
         data = {
-            'seat_id': seat_id
+            'seat_ids': seat_ids
         }
-        response = self.client.post(api_url, data=data, HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        response = self.client.post(
+            api_url,
+            data=data,
+            format='json',
+            HTTP_AUTHORIZATION=f'Bearer {access_token}'
+        )
         return response
