@@ -39,9 +39,16 @@ class SessionViewSet(ModelViewSet):
     def reserve(self, request, pk=None):
         session = self.get_object()
         seat_ids = request.data.get('seat_ids')
-        
+            
         if not isinstance(seat_ids, list) or not seat_ids:
             return Response({'error': 'seat_ids must be a non-empty list.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        for seat_id in seat_ids:
+            if not isinstance(seat_id, int):
+                return Response(
+                    {'error': f'Invalid seat_id: {seat_id}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         now = timezone.now()
         today = now.date()
@@ -110,16 +117,23 @@ class SessionViewSet(ModelViewSet):
     def buy(self, request, pk=None):
         session = self.get_object()
         seat_ids = request.data.get('seat_ids')
-
+            
         if not isinstance(seat_ids, list) or not seat_ids:
-            return Response({'error': 'seat_ids must be a non-empty list.'}, status=status.HTTP_400_BAD_REQUEST )
+            return Response({'error': 'seat_ids must be a non-empty list.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        for seat_id in seat_ids:
+            if not isinstance(seat_id, int):
+                return Response(
+                    {'error': f'Invalid seat_id: {seat_id}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         now = timezone.now()
         today = now.date()
         current_time = now.time()
         
         if not (session.date > today or (session.date == today and session.showtime > current_time)):
-            return Response({'error': 'The session has already passed.'})
+            return Response({'error': 'The session has already passed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         seat_sessions = list(
             SeatSession.objects.select_for_update().filter(
