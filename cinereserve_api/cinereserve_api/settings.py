@@ -10,8 +10,11 @@ SECRET_KEY = 'django-insecure-camknu$rszhwperzv64t%-y&vs-!#ay7-ypx=u1t$3(mncbzer
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    'abreast-scant-figment.ngrok-free.dev',
+    '127.0.0.1',
+    'localhost',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -26,6 +29,7 @@ INSTALLED_APPS = [
     'booking',
     'rest_framework_simplejwt.token_blacklist',
     'accounts',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -88,7 +92,6 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "BLACKLIST_AFTER_ROTATION": True,
-    'ROTATE_REFRESH_TOKENS': True,
     "SINGIN_KEY": os.environ.get('SECRET_KEY', 'INSECURE'),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
@@ -128,3 +131,9 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+FLW_PUBLIC_KEY = config('FLW_PUBLIC_KEY')
+FLW_SECRET_KEY = config('FLW_SECRET_KEY')
+FLW_ENCRYPTION_KEY = config('FLW_ENCRYPTION_KEY')
+FLW_SECRET_HASH = config('FLW_SECRET_HASH')
+FLW_REDIRECT_URL=config('FLW_REDIRECT_URL')
