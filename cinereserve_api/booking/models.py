@@ -15,6 +15,7 @@ class Booking(models.Model):
         ],
         default='pending'
     )
+    expires_at = models.DateTimeField(null=True, blank=True)
 
 class Ticket(models.Model):
     code = models.CharField(max_length=100, unique=True)
