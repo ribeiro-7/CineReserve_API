@@ -17,6 +17,7 @@ from django.db.models import Q, Prefetch
 import uuid
 from cinema.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
 from django.utils.timezone import localtime
+from payments.views import create_payment_for_booking
 
 
 class SessionPagination(PageNumberPagination):
@@ -172,16 +173,20 @@ class SessionViewSet(ModelViewSet):
         booking = Booking.objects.create(
             user=request.user,
             session=session,
-            status='completed'
+            status='pending'
         )
 
         tickets = []
 
         for seat in seat_sessions:
-            seat.status = 'Sold'
-            seat.reserved_until = None
-            seat.reserved_by = None
-            seat.save(update_fields=['status', 'reserved_until', 'reserved_by'])
+            seat.status = 'Reserved'
+            seat.reserved_by = request.user
+            seat.reserved_until = now + timedelta(minutes=5)
+            seat.save(update_fields=['status', 'reserved_by', 'reserved_until'])
+            update_seat_status_after_timeout.apply_async(
+                args=[seat.id],
+                countdown=300
+            )
             ticket = Ticket.objects.create(
                 user=request.user,
                 seat_session=seat,
@@ -195,16 +200,21 @@ class SessionViewSet(ModelViewSet):
                 'time': session.showtime}
             )
         
-        send_ticket_email.delay(
-            request.user.email,
-            session.movie.title,
-            tickets
-        )
+        try:
+            payment_link = create_payment_for_booking(booking)
+        except Exception as e:
+            transaction.set_rollback(True)
+            return Response(
+                {'error': f'Payment initialization failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response({
             'booking_id': booking.id,
             'movie': f'{session.movie.title}',
-            'tickets': tickets
+            'tickets': tickets,
+            'payment_link': payment_link,
+            'message': 'Complete payment to confirm your booking...'
         }, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
