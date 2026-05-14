@@ -2,6 +2,7 @@ import random
 from faker import Faker
 from datetime import datetime, timedelta, time
 from cinema.models import Movie, Session, Seat
+from decimal import Decimal
 
 fake = Faker('pt_BR')
 
@@ -19,6 +20,16 @@ GENRES = [
     "Documentário",
 ]
 
+TICKET_PRICES = [
+    Decimal("16.90"),
+    Decimal("18.50"),
+    Decimal("20.00"),
+    Decimal("22.90"),
+    Decimal("25.00"),
+    Decimal("27.50"),
+    Decimal("30.00"),
+]
+
 def generate_mixed_date(past_days=10, future_days=30):
     today = datetime.now().date()
     days_offset = random.randint(-past_days, future_days)
@@ -27,17 +38,22 @@ def generate_mixed_date(past_days=10, future_days=30):
 
 def run():
     print("Limpando banco...")
+
     Session.objects.all().delete()
     Movie.objects.all().delete()
 
     if not Seat.objects.exists():
-        print("💺 Criando assentos...")
+        print("Criando assentos...")
 
         for row in ['A', 'B', 'C', 'D', 'E']:
             for num in range(1, 11):
-                Seat.objects.create(row=row, number=num)
+                Seat.objects.create(
+                    row=row,
+                    number=num
+                )
 
         print("Assentos criados!")
+
     else:
         print("Assentos já existem.")
 
@@ -52,8 +68,12 @@ def run():
             duration=random.randint(80, 180),
             age_rating=random.choice(['L', '10', '12', '14', '16', '18']),
             genre=random.choice(GENRES),
-            release_date=fake.date_between(start_date='-10y', end_date='today')
+            release_date=fake.date_between(
+                start_date='-10y',
+                end_date='today'
+            )
         )
+
         movies.append(movie)
 
     print("Criando sessões...")
@@ -67,8 +87,9 @@ def run():
             Session.objects.create(
                 date=session_date,
                 showtime=time(random.choice(SHOWTIMES), 0),
-                theater=f"Sala {random.randint(1,7)}",
-                movie=movie
+                theater=f"Sala {random.randint(1, 7)}",
+                movie=movie,
+                ticket_price=random.choice(TICKET_PRICES)
             )
 
     print("Banco populado com sucesso!")
