@@ -38,7 +38,7 @@ class Session(models.Model):
     showtime = models.TimeField()
     theater = models.CharField(max_length=50)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="sessions")
-
+    ticket_price = models.DecimalField(max_digits=8, decimal_places=2, default=20)
 
 class Seat(models.Model):
     row = models.CharField(max_length=5)
