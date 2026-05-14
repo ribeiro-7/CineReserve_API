@@ -1,5 +1,4 @@
 from cinema.models import Session, SeatSession
-from booking.models import Ticket, Booking
 from cinema.serializers.sessionserializers import SeatSessionSerializer, SessionDetailSerializer, SessionSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -7,17 +6,15 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from django.utils import timezone
-from datetime import timedelta
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from cinema.tasks import update_seat_status_after_timeout, send_ticket_email
-from rest_framework import status
-from django.db import transaction
 from django.db.models import Q, Prefetch
-import uuid
 from cinema.throttles import SeatsRateThrottle, ReserveRateThrottle, BuyRateThrottle, SessionReadRateThrottle
-from django.utils.timezone import localtime
-from payments.views import create_payment_for_booking
+from payments.services import PaymentService
+from cinema.services.booking_service import BookingService
+from cinema.services.reservation_service import ReservationService
+from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework import status
 
 
 class SessionPagination(PageNumberPagination):
@@ -36,186 +33,87 @@ class SessionViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'], throttle_classes=[ReserveRateThrottle])
-    @transaction.atomic
     def reserve(self, request, pk=None):
         session = self.get_object()
-        seat_ids = request.data.get('seat_ids')
-            
-        if not isinstance(seat_ids, list) or not seat_ids:
-            return Response({'error': 'seat_ids must be a non-empty list.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        for seat_id in seat_ids:
-            if not isinstance(seat_id, int):
-                return Response(
-                    {'error': f'Invalid seat_id: {seat_id}'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        now = timezone.now()
-        today = now.date()
-        current_time = now.time()
+        seat_ids = request.data.get("seat_ids")
 
-        if not (session.date > today or (session.date == today and session.showtime > current_time)):
-            return Response({'error': 'The session has already passed.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        seat_sessions = list(
-            SeatSession.objects.select_for_update().filter(
-                id__in=seat_ids,
-                session=session
+        try:
+            reserved_seats = ReservationService.reserve_seats(
+                user=request.user,
+                session=session,
+                seat_ids=seat_ids
             )
-        )
 
-        if len(seat_sessions) != len(seat_ids):
-            return Response({'error': 'One or more seats not found.'}, status=status.HTTP_404_NOT_FOUND)
-                
-        invalid_seats = []
+            return Response({
+                "reserved_seats": reserved_seats
+            })
 
-        for seat in seat_sessions:
-            if seat.status == 'Reserved':
-                if seat.reserved_until and seat.reserved_until < now:
-                    seat.status = 'Available'
-                    seat.reserved_until = None
-                    seat.reserved_by = None
-                    seat.save(update_fields=['status', 'reserved_until', 'reserved_by'])
-                else:
-                    invalid_seats.append(seat)
-            elif seat.status == 'Sold':
-                invalid_seats.append(seat)
-
-        if invalid_seats:
-            invalid_seats_label = [
-                f'{seat.seat.row}{seat.seat.number}'
-                for seat in invalid_seats
-            ]
+        except ValidationError as e:
             return Response(
-                {'error': f"Seats unavailable: {', '.join(invalid_seats_label)}"},
+                {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        reserved_seats = []
 
-        for seat in seat_sessions:
-            seat.status = 'Reserved'
-            seat.reserved_until = now + timedelta(minutes=5)
-            expires_at = seat.reserved_until
-            seat.reserved_by = request.user
-            seat.save(update_fields=['status', 'reserved_until', 'reserved_by'])
-            update_seat_status_after_timeout.apply_async(
-            args=[seat.id],
-            countdown=300
+        except NotFound as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_404_NOT_FOUND
             )
-            reserved_seats.append({
-                'seat': f'{seat.seat.row}{seat.seat.number}',
-                'status': seat.status,
-                'expires_at': localtime(expires_at).strftime("%d/%m/%Y - %H:%M:%S")
-            })
-        return Response({
-            'reserved_seats': reserved_seats
-        }, status=status.HTTP_200_OK)
-
+    
     @action(detail=True, methods=['post'], throttle_classes=[BuyRateThrottle])
-    @transaction.atomic
     def buy(self, request, pk=None):
         session = self.get_object()
-        seat_ids = request.data.get('seat_ids')
-            
-        if not isinstance(seat_ids, list) or not seat_ids:
-            return Response({'error': 'seat_ids must be a non-empty list.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        for seat_id in seat_ids:
-            if not isinstance(seat_id, int):
-                return Response(
-                    {'error': f'Invalid seat_id: {seat_id}'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        now = timezone.now()
-        today = now.date()
-        current_time = now.time()
-        
-        if not (session.date > today or (session.date == today and session.showtime > current_time)):
-            return Response({'error': 'The session has already passed.'}, status=status.HTTP_400_BAD_REQUEST)
+        seat_ids = request.data.get("seat_ids")
 
-        seat_sessions = list(
-            SeatSession.objects.select_for_update().filter(
-                id__in=seat_ids,
-                session=session
+        try:
+            booking = BookingService.create_booking(
+                user=request.user,
+                session=session,
+                seat_ids=seat_ids
             )
-        )
 
-        if len(seat_sessions) != len(seat_ids):
-            return Response({'error': 'One or more seats not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-        invalid_seats = []
+            payment_link = PaymentService.create_payment_for_booking(booking)
 
-        for seat in seat_sessions:
-            if seat.status == 'Reserved' and seat.reserved_by != request.user:
-                if seat.reserved_until and seat.reserved_until < now:
-                    seat.status = 'Available'
-                    seat.reserved_until = None
-                    seat.reserved_by = None
-                    seat.save(update_fields=['status', 'reserved_until', 'reserved_by'])
-                else:
-                    invalid_seats.append(seat)
-            elif seat.status == 'Sold':
-                invalid_seats.append(seat)
+            tickets = []
 
-        if invalid_seats:
-            invalid_seats_label = [
-                f'{seat.seat.row}{seat.seat.number}'
-                for seat in invalid_seats
-            ]
+            for ticket in booking.tickets.select_related("seat_session__seat"):
+                seat = ticket.seat_session
+                tickets.append({
+                    "seat": f"{seat.seat.row}{seat.seat.number}",
+                    "ticket_code": ticket.code,
+                    "price": ticket.price,
+                    "date": session.date,
+                    "time": session.showtime
+                })
+
+            return Response({
+                "booking_id": booking.id,
+                "movie": session.movie.title,
+                "tickets": tickets,
+                "amount": booking.amount,
+                "payment_link": payment_link,
+                "message": (
+                    "Complete payment to confirm your booking..."
+                )
+            }, status=status.HTTP_201_CREATED)
+
+        except ValidationError as e:
             return Response(
-                {'error': f"Seats unavailable: {', '.join(invalid_seats_label)}"},
+                {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        booking = Booking.objects.create(
-            user=request.user,
-            session=session,
-            status='pending'
-        )
-
-        tickets = []
-
-        for seat in seat_sessions:
-            seat.status = 'Reserved'
-            seat.reserved_by = request.user
-            seat.reserved_until = now + timedelta(minutes=5)
-            seat.save(update_fields=['status', 'reserved_by', 'reserved_until'])
-            update_seat_status_after_timeout.apply_async(
-                args=[seat.id],
-                countdown=300
-            )
-            ticket = Ticket.objects.create(
-                user=request.user,
-                seat_session=seat,
-                booking=booking,
-                code=str(uuid.uuid4())
-            )
-            tickets.append({
-                'seat': f"{seat.seat.row}{seat.seat.number}",
-                'ticket_code': ticket.code,
-                'date': session.date,
-                'time': session.showtime}
-            )
-        
-        try:
-            payment_link = create_payment_for_booking(booking)
-        except Exception as e:
-            transaction.set_rollback(True)
+        except NotFound as e:
             return Response(
-                {'error': f'Payment initialization failed: {str(e)}'},
+                {"error": str(e)},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        return Response({
-            'booking_id': booking.id,
-            'movie': f'{session.movie.title}',
-            'tickets': tickets,
-            'payment_link': payment_link,
-            'message': 'Complete payment to confirm your booking...'
-        }, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
