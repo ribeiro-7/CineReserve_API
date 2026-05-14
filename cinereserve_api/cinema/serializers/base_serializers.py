@@ -30,7 +30,7 @@ class SessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Session
-        fields = ['id', 'date', 'showtime', 'theater', 'movie']
+        fields = ['id', 'date', 'showtime', 'theater', 'movie', 'ticket_price']
         extra_kwargs = {
             'movie': {'write_only': True}
         }
