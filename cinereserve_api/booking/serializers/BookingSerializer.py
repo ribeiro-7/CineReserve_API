@@ -7,6 +7,12 @@ class BookingSerializer(serializers.ModelSerializer):
     session_date = serializers.DateField(source='session.date', format="%d/%m/%Y", read_only=True)
     session_time = serializers.TimeField(source='session.showtime', format="%H:%M:%S", read_only=True)
     movie_title = serializers.CharField(source='session.movie.title', read_only=True)
+    amount = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        read_only=True
+    )
+    
     class Meta:
         model = Booking
         fields = [
@@ -16,5 +22,6 @@ class BookingSerializer(serializers.ModelSerializer):
             'session_time',
             'status',
             'created_at',
-            'tickets'
+            'tickets',
+            'amount'
         ]
