@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from cinema.models import Session, SeatSession
+from decimal import Decimal
 
 class Booking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -17,9 +18,17 @@ class Booking(models.Model):
     )
     expires_at = models.DateTimeField(null=True, blank=True)
 
+    @property
+    def amount(self):
+        return sum(
+            (ticket.price for ticket in self.tickets.all()),
+            Decimal("0.00")
+        )
+
 class Ticket(models.Model):
     code = models.CharField(max_length=100, unique=True)
     purchased_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     seat_session = models.OneToOneField(SeatSession, on_delete=models.CASCADE)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='tickets')
+    price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
