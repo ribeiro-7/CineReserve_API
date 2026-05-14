@@ -1,4 +1,4 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet
 from booking.models import Ticket
 from booking.serializers.TicketSerializer import TicketSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -6,16 +6,16 @@ from django.utils import timezone
 from booking.throttles import TicketRateThrottle
 from django.db.models import Q
 
-class TicketViewSet(ModelViewSet):
+class TicketViewSet(ReadOnlyModelViewSet):
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get']
     throttle_classes = [TicketRateThrottle]
     
     def get_queryset(self):
-        queryset = Ticket.objects.filter(user=self.request.user).select_related(
+        queryset = Ticket.objects.filter(user=self.request.user, booking__status='completed').select_related(
             'seat_session__session__movie',
-            'seat_session__seat'
+            'seat_session__seat',
+            'booking'
         )
 
         ticket_type = self.request.query_params.get('type')
