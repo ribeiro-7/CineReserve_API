@@ -69,25 +69,37 @@ O arquivo tem que ser criado na raiz do projeto.
 Adicione as informações do seu banco de dados 👇
 
 ```env
+# =========================
 # Database Settings
+# =========================
+
 DB_NAME=nome_do_seu_bd
-DB_USER=user_do_db
+DB_USER=usuario_do_bd
 DB_PASSWORD=senha_do_bd
 DB_HOST=db
 DB_PORT=5432
 
-# Django SECRET KEY
+# =========================
+# Django Settings
+# =========================
+
 SECRET_KEY=CHANGE-ME
 
-#Url do Broker do Celery
-CELERY_BROKER_URL=url_do_broker
+# =========================
+# Celery / Redis
+# =========================
 
-#Flutterwave 
-FLW_PUBLIC_KEY = CHANGE-ME
-FLW_SECRET_KEY = CHANGE-ME
-FLW_ENCRYPTION_KEY = CHANGE-ME
-FLW_SECRET_HASH = CHANGE-ME
-FLW_REDIRECT_URL= CHANGE-ME
+CELERY_BROKER_URL=redis://redis:6379/0
+
+# =========================
+# Flutterwave Settings
+# =========================
+
+FLW_PUBLIC_KEY=CHANGE-ME
+FLW_SECRET_KEY=CHANGE-ME
+FLW_ENCRYPTION_KEY=CHANGE-ME
+FLW_SECRET_HASH=CHANGE-ME
+FLW_REDIRECT_URL=CHANGE-ME
 ```
 
 ---
@@ -125,6 +137,15 @@ Fiz um Script chamado "Populate" para criar objetos no banco de dados mais facil
 
 ```bash
 docker-compose exec web python cinereserve_api/manage.py runscript populate
+```
+
+---
+
+## 🛑 Parar o projeto
+
+```bash
+Ctrl + C
+docker-compose down
 ```
 
 ---
@@ -192,12 +213,3 @@ docker-compose exec web python cinereserve_api/manage.py runscript populate
 |---|---|---|
 | GET | `/api/v1/bookings/` | Listar reservas/compras do usuário |
 | GET | `/api/v1/bookings/{id}/` | Detalhes de uma reserva/compra |
-
----
-
-## 🛑 Parar o projeto
-
-```bash
-Ctrl + C
-docker-compose down
-```
