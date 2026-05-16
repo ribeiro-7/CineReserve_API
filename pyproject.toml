@@ -57,7 +57,8 @@ dependencies = [
     "virtualenv (==21.2.0)",
     "zstandard (==0.25.0)",
     "redis (>=7.4.0,<8.0.0)",
-    "celery (>=5.6.3,<6.0.0)"
+    "celery (>=5.6.3,<6.0.0)",
+    "drf-spectacular (>=0.29.0,<0.30.0)"
 ]
 
 
