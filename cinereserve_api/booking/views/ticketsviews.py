@@ -5,7 +5,41 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from booking.throttles import TicketRateThrottle
 from django.db.models import Q
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+    OpenApiTypes,
+)
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List user tickets",
+        description=(
+            "Returns authenticated user tickets. "
+            "Can filter by upcoming or past sessions."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='type',
+                description=(
+                    "Filter tickets by type. "
+                    "Use 'upcoming', 'past', or omit for all tickets."
+                ),
+                required=False,
+                type=OpenApiTypes.STR,
+                enum=['upcoming', 'past'],
+            )
+        ],
+        tags=['Tickets'],
+    ),
+
+    retrieve=extend_schema(
+        summary="Retrieve ticket",
+        description="Returns a specific ticket by ID.",
+        tags=['Tickets'],
+    )
+)
 class TicketViewSet(ReadOnlyModelViewSet):
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated]
