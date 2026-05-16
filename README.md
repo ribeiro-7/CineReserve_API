@@ -13,7 +13,7 @@ A documentação da API foi desenvolvida utilizando:
 👇👇👇
 
 ## 🔗 Documentação no Postman
-https://documenter.getpostman.com/view/40491697/2sBXijJXRb
+https://documenter.getpostman.com/view/40491697/2sBXqRibqf
 
 ---
 
