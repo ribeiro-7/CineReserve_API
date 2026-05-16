@@ -1,15 +1,48 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet
 from booking.models import Booking
 from booking.serializers.BookingSerializer import BookingSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from booking.throttles import BookingRateThrottle
 from django.db.models import Q
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+    OpenApiTypes,
+)
 
-class BookingViewSet(ModelViewSet):
+@extend_schema_view(
+    list=extend_schema(
+        summary="List user bookings",
+        description=(
+            "Returns authenticated user bookings. "
+            "Can filter by upcoming or past sessions."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='type',
+                description=(
+                    "Filter bookings by type. "
+                    "Use 'upcoming', 'past', or omit for all tickets."
+                ),
+                required=False,
+                type=OpenApiTypes.STR,
+                enum=['upcoming', 'past'],
+            )
+        ],
+        tags=['Booking'],
+    ),
+
+    retrieve=extend_schema(
+        summary="Retrieve booking",
+        description="Returns a specific booking by ID.",
+        tags=['Booking'],
+    )
+)
+class BookingViewSet(ReadOnlyModelViewSet):
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get']
     throttle_classes = [BookingRateThrottle]
     
     def get_queryset(self):
