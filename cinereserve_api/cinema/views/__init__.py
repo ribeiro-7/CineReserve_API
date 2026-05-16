@@ -1,2 +1,2 @@
-from .movieviews import *
-from .sessionviews import *
+from .movie_viewset import *
+from .session_viewset import *
