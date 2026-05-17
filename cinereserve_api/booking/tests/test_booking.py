@@ -1,12 +1,21 @@
 from rest_framework import test
 from cinema.tests.mixins import seat_mixins
+from cinema.tests.mixins.payment_mixins import PaymentMixin
 from django.urls import reverse
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
 from accounts.tests.mixins import jwt_mixins
 
-class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
+
+class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin, PaymentMixin,):
+    def setUp(self):
+        cache.clear()
+        self.start_flutterwave_mocks()
+
+    def tearDown(self):
+        self.stop_flutterwave_mocks()
+
     def test_booking_history_list_returns_all_bookings_200_ok(self):
         token = self.get_user_access_token()
         create_seats = self.create_seats()
@@ -14,10 +23,10 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
         seat1_id = create_seats['seat_sessions'][0].id
         seat2_id = create_seats['seat_sessions'][1].id
 
-        self.buy_seats(
+        self.buy_and_complete_seats(
             session_id=session_id,
             seat_ids=[seat1_id, seat2_id],
-            access_token=token
+            access_token=token,
         )
 
         api_url = reverse('bookings-list')
@@ -36,15 +45,14 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
 
         seat = self.create_available_seat()
 
-        buy = self.buy_seats(
+        buy = self.buy_and_complete_seats(
             session_id=seat.session.id,
             seat_ids=[seat.id],
-            access_token=user_access_token
+            access_token=user_access_token,
         )
 
         api_url = reverse('bookings-list') + '?type=upcoming'
         response = self.client.get(api_url, HTTP_AUTHORIZATION=f'Bearer {user_access_token}')
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['id'], buy.data.get('booking_id'))
@@ -54,10 +62,10 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
 
         seat = self.create_available_seat()
 
-        buy = self.buy_seats(
+        buy = self.buy_and_complete_seats(
             session_id=seat.session.id,
             seat_ids=[seat.id],
-            access_token=user_access_token
+            access_token=user_access_token,
         )
 
         session = seat.session
@@ -78,16 +86,16 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
         seat1 = self.create_available_seat()
         seat2 = self.create_available_seat(number='2')
 
-        self.buy_seats(
+        self.buy_and_complete_seats(
             session_id=seat1.session.id,
             seat_ids=[seat1.id],
-            access_token=token
+            access_token=token,
         )
 
-        self.buy_seats(
+        self.buy_and_complete_seats(
             session_id=seat2.session.id,
             seat_ids=[seat2.id],
-            access_token=token
+            access_token=token,
         )
 
         api_url = reverse('bookings-list')
@@ -101,10 +109,10 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
 
         seat = self.create_available_seat()
 
-        buy = self.buy_seats(
+        buy = self.buy_and_complete_seats(
             session_id=seat.session.id,
             seat_ids=[seat.id],
-            access_token=token
+            access_token=token,
         )
 
         ticket_code = buy.data['tickets'][0]['ticket_code']
@@ -123,10 +131,10 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
 
         seat = self.create_available_seat()
 
-        self.buy_seats(
+        self.buy_and_complete_seats(
             session_id=seat.session.id,
             seat_ids=[seat.id],
-            access_token=user1
+            access_token=user1,
         )
 
         api_url = reverse('bookings-list')
@@ -134,5 +142,3 @@ class BookingTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 0)
-
-    

@@ -1,28 +1,34 @@
 from rest_framework import test
 from cinema.tests.mixins import seat_mixins
+from cinema.tests.mixins.payment_mixins import PaymentMixin
 from django.urls import reverse
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
 from accounts.tests.mixins import jwt_mixins
 
-class TicketTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
+
+class TicketTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin, PaymentMixin,):
     def setUp(self):
         cache.clear()
+        self.start_flutterwave_mocks()
+
+    def tearDown(self):
+        self.stop_flutterwave_mocks()
 
     def test_ticket_history_list_returns_all_tickets_200_ok(self):
         token = self.get_user_access_token()
         seat1 = self.create_available_seat()
         seat2 = self.create_available_seat(number='2')
-        buy1 = self.buy_seats(
+        buy1 = self.buy_and_complete_seats(
             session_id=seat1.session.id,
             seat_ids=[seat1.id],
-            access_token=token
+            access_token=token,
         )
-        buy2 = self.buy_seats(
+        buy2 = self.buy_and_complete_seats(
             session_id=seat2.session.id,
             seat_ids=[seat2.id],
-            access_token=token
+            access_token=token,
         )
 
         api_url = reverse('tickets-list')
@@ -40,15 +46,15 @@ class TicketTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
         seat1 = self.create_available_seat()
         seat2 = self.create_available_seat(number='2')
 
-        buy1 = self.buy_seats(
+        buy1 = self.buy_and_complete_seats(
             session_id=seat1.session.id,
             seat_ids=[seat1.id],
-            access_token=token
+            access_token=token,
         )
-        buy2 = self.buy_seats(
+        buy2 = self.buy_and_complete_seats(
             session_id=seat2.session.id,
             seat_ids=[seat2.id],
-            access_token=token
+            access_token=token,
         )
 
         api_url = reverse('tickets-list') + '?type=upcoming'
@@ -65,10 +71,10 @@ class TicketTest(test.APITestCase, jwt_mixins.JWTMixin, seat_mixins.SeatMixin):
         token = self.get_user_access_token()
         seat = self.create_available_seat()
 
-        buy = self.buy_seats(
+        buy = self.buy_and_complete_seats(
             session_id=seat.session.id,
             seat_ids=[seat.id],
-            access_token=token
+            access_token=token,
         )
 
         session = seat.session
