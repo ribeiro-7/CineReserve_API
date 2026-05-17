@@ -10,11 +10,11 @@ SECRET_KEY = 'django-insecure-camknu$rszhwperzv64t%-y&vs-!#ay7-ypx=u1t$3(mncbzer
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'abreast-scant-figment.ngrok-free.dev',
-    '127.0.0.1',
-    'localhost',
-]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+_ngrok_host = config('NGROK_HOST', default='')
+if _ngrok_host:
+    ALLOWED_HOSTS.append(_ngrok_host)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
