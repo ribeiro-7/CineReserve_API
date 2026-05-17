@@ -11,6 +11,20 @@ class ReservationService:
     def reserve_seats(user, session, seat_ids):
         from cinema.tasks import update_seat_status_after_timeout_on_reserve
         now = timezone.now()
+        today = now.date()
+        current_time = now.time()
+
+        if not (
+            session.date > today or
+            (
+                session.date == today and
+                session.showtime > current_time
+            )
+        ):
+            raise ValidationError(
+                "The session has already passed."
+            )
+
         seat_sessions = list(
             SeatSession.objects.select_for_update().filter(
                 id__in=seat_ids,
