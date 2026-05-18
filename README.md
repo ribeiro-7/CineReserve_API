@@ -11,6 +11,10 @@ A API CineReserve é um backend RESTful escalável e de alto desempenho, projeta
 - **Flutterwave** (pagamentos)
 - **drf-spectacular** (OpenAPI / Swagger / ReDoc)
 
+## Arquitetura
+
+![Arquitetura do projeto](docs/images/Arquitetura.png)
+
 ## Pré-requisitos
 
 - [Docker](https://www.docker.com/) e Docker Compose (v2: comando `docker compose`)
@@ -30,6 +34,8 @@ A documentação da API está disponível em:
 
 https://documenter.getpostman.com/view/40491697/2sBXqRibqf
 
+![Documentação Postman](docs/images/postman.png)
+
 ### Documentação local (com o projeto rodando)
 
 | Recurso | URL |
@@ -40,6 +46,8 @@ https://documenter.getpostman.com/view/40491697/2sBXqRibqf
 | Django Admin | http://localhost:8000/admin/ |
 
 ---
+
+![Documentação Swagger](docs/images/swagger.png)
 
 ## Como rodar o projeto com Docker
 
@@ -149,6 +157,8 @@ docker compose exec web bash -c "cd /app/cinereserve_api && poetry run coverage 
 
 Os testes usam `settings_test` automaticamente (Celery eager, e-mail em memória) e mockam as chamadas HTTP à Flutterwave.
 
+![Testes](docs/images/terminal.png)
+
 ---
 
 ## Parar o projeto
@@ -172,6 +182,9 @@ docker compose down
 Em **localhost**, os passos 3–4 dependem de URL pública (ngrok). Sem webhook, o pagamento na Flutterwave pode até ser aprovado, mas a API **não** finaliza a compra sozinha.
 
 > Nos endpoints `reserve` e `buy`, o campo `seat_ids` deve conter os **IDs de `SeatSession`** (retornados em `GET /api/v1/sessions/{id}/seats/`), não os IDs da tabela `Seat`.
+
+![Request Postman](docs/images/request.png)
+![Pagamento Flutterwave](docs/images/flutterwave.png)
 
 ---
 
