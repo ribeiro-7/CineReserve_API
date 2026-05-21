@@ -41,7 +41,8 @@ jobs:
           cd cinereserve_api &&
           python manage.py makemigrations --check --dry-run &&
           python manage.py migrate --noinput &&
-          python manage.py test
+          coverage run manage.py test &&
+          coverage report --fail-under=85
           "
 
       - name: Show logs on failure
