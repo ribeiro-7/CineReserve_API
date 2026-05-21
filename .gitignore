@@ -20,7 +20,6 @@ db.sqlite3
 *.log
 staticfiles/
 media/
-migrations/
 
 # 🔑 Variáveis sensíveis
 .env
