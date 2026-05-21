@@ -40,6 +40,12 @@ jobs:
 
       - name: Wait for database
         run: sleep 15
+      
+      - name: Run makemigrations
+        run: docker compose exec web python cinereserve_api/manage.py makemigrations
+      
+      - name: Run migrations
+        run: docker compose exec web python cinereserve_api/manage.py migrate
 
       - name: Run tests
         run: |
