@@ -146,13 +146,18 @@ Com os containers em execução:
 Comando para rodar todos os testes:
 
 ```bash
-docker compose exec web bash -c "cd /app && poetry install --with dev && cd cinereserve_api && poetry run python manage.py test"
+docker compose exec web bash -c "cd cinereserve_api && python manage.py test"
 ```
 
 Coverage (meta mínima de 85% em [`.coveragerc`](.coveragerc)) e geração do index.html em [`htmlcov`](htmlcov):
 
 ```bash
-docker compose exec web bash -c "cd /app/cinereserve_api && poetry run coverage run manage.py test && poetry run coverage report --fail-under=85 && poetry run coverage html --directory=/app/htmlcov"
+docker compose exec -T web bash -c "
+    cd cinereserve_api &&
+    coverage run manage.py test &&
+    coverage report --fail-under=85 &&
+    coverage html --directory=htmlcov
+    "
 ```
 
 Os testes usam `settings_test` automaticamente (Celery eager, e-mail em memória) e mockam as chamadas HTTP à Flutterwave.
