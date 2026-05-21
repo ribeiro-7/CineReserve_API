@@ -5,7 +5,7 @@ A API CineReserve é um backend RESTful escalável e de alto desempenho, projeta
 ## Stack
 
 - **Django 6** + **Django REST Framework**
-- **PostgreSQL** (dados) + **Redis** (broker Celery)
+- **PostgreSQL** (dados) + **Redis** (broker Celery, caching e rate limiting (django-redis))
 - **Celery** (timeouts de reserva/compra e envio de e-mail)
 - **JWT** (`djangorestframework-simplejwt`)
 - **Flutterwave** (pagamentos)
