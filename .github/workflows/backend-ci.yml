@@ -23,6 +23,11 @@ jobs:
           echo "DB_PORT=5432" >> .env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
           echo "CELERY_BROKER_URL=redis://redis:6379/0" >> .env
+          echo "FLW_PUBLIC_KEY=${{ secrets.FLW_PUBLIC_KEY }}" >> .env
+          echo "FLW_SECRET_KEY=${{ secrets.FLW_SECRET_KEY }}" >> .env
+          echo "FLW_ENCRYPTION_KEY=${{ secrets.FLW_ENCRYPTION_KEY }}" >> .env
+          echo "FLW_SECRET_HASH=${{ secrets.FLW_SECRET_HASH }}" >> .env
+          echo "FLW_REDIRECT_URL=${{ secrets.FLW_REDIRECT_URL }}" >> .env
 
       - name: Build containers
         run: docker compose build
