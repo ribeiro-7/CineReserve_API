@@ -29,8 +29,11 @@ jobs:
           echo "FLW_SECRET_HASH=${{ secrets.FLW_SECRET_HASH }}" >> .env
           echo "FLW_REDIRECT_URL=${{ secrets.FLW_REDIRECT_URL }}" >> .env
 
+      - name: Remove old containers
+        run: docker compose down -v
+
       - name: Build containers
-        run: docker compose build
+        run: docker compose build --no-cache
 
       - name: Start containers
         run: docker compose up -d
