@@ -3,9 +3,9 @@ name: CineReserve CI Pipeline
 on:
   push:
     branches: ["main"]
+
   pull_request:
     branches: ["main"]
-  workflow_dispatch:
 
 jobs:
   tests:
@@ -14,27 +14,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create .env file
+      - name: Create .env
         run: |
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_HOST=db" >> .env
+          echo "DB_PORT=5432" >> .env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
 
       - name: Build containers
         run: docker compose build
 
-      - name: Start services
+      - name: Start containers
         run: docker compose up -d
 
+      - name: Show containers
+        run: docker compose ps
+
+      - name: Wait for database
+        run: sleep 15
+
       - name: Run tests
-        run: docker compose exec -T web bash -c "
+        run: |
+          docker compose exec -T web bash -c "
           cd cinereserve_api &&
-          poetry run python manage.py test
+          python manage.py test
           "
 
-      - name: Shutdown services
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Shutdown
         if: always()
         run: docker compose down
