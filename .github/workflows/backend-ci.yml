@@ -1,0 +1,30 @@
+name: CineReserve CI Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Run tests
+        run: docker compose exec -T web bash -c "
+            cd cinereserve_api &&
+            poetry run python manage.py test
+          "
+
+      - name: Shutdown services
+        if: always()
+        run: docker compose down
